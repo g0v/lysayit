@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>立法院會議記錄</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<link href="https://sayit.pdis.nat.gov.tw/static/speeches/css/speeches.css" rel="stylesheet" type="text/css">
+
+</head>
+<body id="top">
+
+<header>
+    <div class="full-page__row">
+        <div class="full-page__unit">
+            <h1><a href="/">SayIt</a></h1>
+
+            <ul class="inline-list left">
+                <li><a href="/">首頁</a></li>
+                <li><a href="/speakers">Speakers</a></li>
+                <li><a href="/speeches">Speeches</a></li>
+            </ul>
+            <ul class="unstyled-list right">
+            </ul>
+        </div>
+    </div>
+</header>
+
+<div class="full-page">
+    <div class="full-page__row">
+        <div class="full-page__unit">
+            <div class="page-header page-header--speech">
+                <ul class="breadcrumbs">
+                </ul>
+                <h1 id="title"></h1>
+                <dl id="meta">
+                </dl>
+                <ul id="sections">
+                </ul>
+            </div>
+            <div class="page-content__row">
+                <div class="primary-content__unit">
+                    <ul class="section-list">
+
+
+                    </ul>
+
+
+
+
+
+
+
+                </div><!-- close primary-content__unit -->
+
+                <div class="sidebar__unit section-detail-sidebar">
+
+
+
+
+                </div><!-- close sidebar__unit -->
+
+            </div><!-- close page-content_row -->
+
+
+
+
+
+
+
+        </div>
+    </div>
+</div>
+
+<footer style="position: relative; margin-bottom: 2vh; text-align: center">
+    <!--<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="創用 CC 授權條款" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" ></a>  本站除另有標示外，內容皆以<a rel="license" href="http://creativecommons.org/licenses/by/4.0/">創用 CC 姓名標示 4.0 國際 授權條款</a>授權釋出 -->
+    <p style="font-size: 1em; font-weight: bold">本站除另有標示外，內容以創用 CC0 授權條款釋出</p>
+</footer>
+<script type="text/html" id="tmpl-talk">
+<li class="speech speech--with-portrait speech-- speech--border" style="border-left-color: #1bdf1a;">
+<div class="speaker-portrait-wrapper">
+    <img src=""
+    style="border-color: #1bdf1a; background-color: #1bdf1a;" alt=""  class="speaker-portrait speaker-portrait--left round-image speaker-portrait--medium">
+</div>
+<div class="speech-wrapper">
+    <div class="speech__meta-data">
+        <span class="speech__meta-data__speaker-name">
+            <a href=""></a>
+        </span>
+    </div>
+    <div class="speech__content">
+    </div>
+    <div class="speech__links">
+        <a title="Link in context" href=""><i class="speech-icon icon-link-in-context"></i>Link in context</a>
+    </div>
+</div>
+</li>
+</script>
+<script>
+var matches = document.location.href.match(/id=([^&#]+)(#line-(.*))?/);
+if (matches) {
+    var person_data;
+    var name_map = {};
+    $.get('person.json', function(ret){
+        person_data = ret;
+        for (var record of person_data) {
+            name_map[record[1]] = record[2];
+        }
+        
+        $.get(matches[1] + '.json', function(ret){
+                $('#title').text(ret.title);
+                document.title = ret.title;
+                for (var idx in ret.blocks) {
+                    var block = ret.blocks[idx];
+                    var dom = $($('#tmpl-talk').html());
+                    var name = block[0].split('：')[0];
+                    if (name == '段落') {
+                        var a_dom = $('<a></a>').attr('href', '#line-' + ret.block_lines[idx]).text(block[0].replace(/段落：/, ''));
+                        $('#sections').append($('<li></li>').append(a_dom));
+                    }
+                    $('.speech__meta-data__speaker-name a', dom).text(name);
+                    block[0] = block[0].substr(name.length + 1);
+                    if (name == '主席') {
+                        name = ret['主席'];
+                    }
+                    name = name.replace('委員', '');
+                    $(dom).attr('id', 'line-' + ret.block_lines[idx]);
+                    $('.speech__links a', dom).attr('href', '#line-' + ret.block_lines[idx]);
+                    if (typeof(name_map[name]) !== 'undefined') {
+                        $('img.speaker-portrait', dom).attr('src', name_map[name]);
+                    } else {
+                        $('img.speaker-portrait', dom).attr('src', 'https://sayit.pdis.nat.gov.tw/static/speeches/i/a.png');
+                    }
+                    for (var line of block) {
+                        $('.speech__content', dom).append($('<p></p>').text(line));
+                    }
+                    $('.section-list').append(dom);
+                }
+                if (matches[3]) {
+                    var aTag = $('#line-' + matches[3]);
+                    $('html,body').animate({scrollTop: aTag.offset().top},'slow');
+                }
+                console.log(ret);
+                for (var c of ['地點', '時間', '主席']) {
+                    if (ret[c]) {
+                        $('#meta').append($('<dd></dd>').text(c)).append($('<dt></dt>').text(ret[c]));
+                    }
+                }
+        }, 'json');
+    }, 'json');
+}
+</script>
+</body>
+</html>
+

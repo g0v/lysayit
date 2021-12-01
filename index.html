@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>立法院會議記錄</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.css">
+</head>
+<body>
+<div class="container">
+    <ul id="list">
+    </ul>
+</div>
+<script>
+$.get('list.json', function(ret){
+        for (var record of ret) {
+            var a_dom = $('<a></a>').attr('href', 'speech.html?id=' + encodeURIComponent(record[0])).text(record[1]);
+            $('#list').append($('<li></li>').append(a_dom));
+        }
+}, 'json');
+</script>
+</body>
+</html>

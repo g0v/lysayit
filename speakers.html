@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <script src="https://unpkg.com/vue@next"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+  <link href="/css/style.css" rel="stylesheet" type="text/css">
+  <title>立法院演講者</title>
+</head>
+
+<body>
+  <div class="container">
+    <nav id="header">
+      <div>
+        <div>
+          <h1><a href="/" class="text-danger">SayIt</a></h1>
+          <ul>
+            <li><a href="/" class="text-danger">首頁</a></li>
+            <li><a href="/speakers.html" class="text-danger">Speakers</a></li>
+            <li><a href="/speeches" class="text-danger">Speeches</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div id="speakers-app">
+      <nav class="mb-4">
+        <a v-for="period in periods" :key="period" class="btn btn-danger me-2" @click.stop.prevent="changePeriod(period)">
+          第{{ period }}屆
+        </a>
+      </nav>
+      <main>
+        <h2 class="mb-3">第{{ periodSelect }}屆國會</h2>
+        <div class="d-flex mb-3">
+          <button class="btn btn-success me-1" @click="sortByMeetCount">以參與次數排序</button>
+          <button class="btn btn-success" @click="sortBySpeechCount">以發言次數排序</button>
+        </div>
+        <h3>委員</h3>
+        <div v-if="!initialized" class="d-flex justify-content-center">
+          <div class="spinner-grow text-danger" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        <div v-else id="members" class="mb-3">
+          <person-card
+            v-for="person in selectedMembers"
+            :key="person.name"
+            :person="person"
+          />
+        </div>
+        <h3>非委員</h3>
+        <div v-if="!initialized" class="d-flex justify-content-center">
+          <div class="spinner-grow text-danger" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        <div v-else id="non-members">
+          <person-card
+            v-for="person in selectedNonMembers"
+            :key="person.name"
+            :person="person"
+          />
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+  <script>
+    const app = Vue.createApp({
+      data() {
+        return {
+          initialized: false,
+          periods: [9, 10],
+          periodSelect: 10,
+          people: []
+        }
+      },
+      async mounted() {
+        await this.fetchPeople()
+        this.initialized = true
+      },
+      computed: {
+        selectedMembers() {
+          return this.people.filter(x => x.type === '委員')
+        },
+        selectedNonMembers() {
+          return this.people.filter(x => x.type === '非委員')
+        },
+      },
+      methods: {
+        async changePeriod(period) {
+          this.periodSelect = period
+          this.initialized = false
+          await this.fetchPeople()
+          this.initialized = true
+        },
+        async fetchPeople() {
+          const resp = await fetch(`/personlist/personlist-${this.periodSelect}.json`)
+          const list = await resp.json()
+          this.people = list.map(x => {
+            let info = {
+              period: this.periodSelect,
+              type: x.type,
+              name: x.name,
+              meet_count: x.meet_count,
+              speech_count: x.speech_count,
+            }
+            if (x.type === "委員") {
+              info.period = this.periodSelect
+              info.photo = x.extra[2]
+              info.party = x.extra[3]
+            }
+
+            return info
+          })
+        },
+        sortByMeetCount() {
+          this.initialized = false
+          this.people.sort((a, b) => b.meet_count - a.meet_count)
+          this.initialized = true
+        },
+        sortBySpeechCount() {
+          this.initialized = false
+          this.people.sort((a, b) => b.speech_count - a.speech_count)
+          this.initialized = true
+        },
+      },
+    })
+    app.component('person-card', {
+      props: ['person'],
+      computed: {
+        href() {
+          return `/speaker.html?period=${this.person.period}&name=${this.person.name}`
+        }
+      },
+      template: `
+          <div class="person-card card me-2 mb-2" style="width: 18rem;">
+            <img v-if="person.photo" :src="person.photo" class="card-img-top" :alt="person.name">
+            <div class="card-body">
+              <h5 class="card-title">{{ person.name }}</h5>
+              <p class="card-text">
+                <ul>
+                  <li>政黨：{{ person.party }}</li>
+                  <li>參與次數：{{ person.meet_count }}</li>
+                  <li>發言次數：{{ person.speech_count }}</li>
+                </ul>
+              </p>
+              <a :href="href" class="btn btn-danger">前往個人頁</a>
+            </div>
+          </div>
+        `
+    })
+
+    app.mount('#speakers-app')
+  </script>
+</body>
+
+</html>

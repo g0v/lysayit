@@ -16,7 +16,7 @@
 
             <ul class="inline-list left">
                 <li><a href="/">首頁</a></li>
-                <li><a href="/speakers">Speakers</a></li>
+                <li><a href="/speakers.html">Speakers</a></li>
                 <li><a href="/speeches">Speeches</a></li>
             </ul>
             <ul class="unstyled-list right">
@@ -105,7 +105,7 @@ if (matches) {
         for (var record of person_data) {
             name_map[record[1]] = record[2];
         }
-        
+
         $.get('meets/' + matches[1] + '.json', function(ret){
                 $('#title').text(ret.title);
                 document.title = ret.title;

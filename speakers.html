@@ -17,27 +17,39 @@
           <h1><a href="/" class="text-danger">SayIt</a></h1>
           <ul>
             <li><a href="/" class="text-danger">首頁</a></li>
-            <li><a href="/speakers" class="text-danger">Speakers</a></li>
+            <li><a href="/speakers.html" class="text-danger">Speakers</a></li>
             <li><a href="/speeches" class="text-danger">Speeches</a></li>
           </ul>
         </div>
       </div>
     </nav>
     <div id="speakers-app">
-      <nav class="mb-5">
-        <a v-for="period in allPeriods" :key="period" class="btn btn-danger me-2" @click.stop.prevent="changePeriod(period)">
+      <nav class="mb-4">
+        <a v-for="period in periods" :key="period" class="btn btn-danger me-2" @click.stop.prevent="changePeriod(period)">
           第{{ period }}屆
         </a>
       </nav>
       <main>
         <h2 class="mb-3">第{{ periodSelect }}屆國會</h2>
+        <div class="d-flex mb-3">
+          <button class="btn btn-success me-1" @click="sortByMeetCount">以參與次數排序</button>
+          <button class="btn btn-success" @click="sortBySpeechCount">以發言次數排序</button>
+        </div>
         <h3>委員</h3>
         <div id="members" class="mb-3">
-          <person-card v-for="person in selectedMembers" :key="person.name" :person="person" />
+          <person-card
+            v-for="person in selectedMembers"
+            :key="person.name"
+            :person="person"
+          />
         </div>
         <h3>非委員</h3>
         <div id="non-members">
-
+          <person-card
+            v-for="person in selectedNonMembers"
+            :key="person.name"
+            :person="person"
+          />
         </div>
       </main>
     </div>
@@ -47,34 +59,52 @@
     const app = Vue.createApp({
       data() {
         return {
+          periods: [9, 10],
           periodSelect: 10,
-          members: []
+          people: []
         }
       },
       async mounted() {
-        const resp = await fetch("/person.json")
-        const list = await resp.json()
-        this.members = list.map(member => {
-          return {
-            period: parseInt(member[0]),
-            name: member[1],
-            photo: member[2],
-            party: member[3]
-          }
-        })
+        await this.assignPeople()
+      },
+      computed: {
+        selectedMembers() {
+          return this.people.filter(x => x.type === '委員')
+        },
+        selectedNonMembers() {
+          return this.people.filter(x => x.type === '非委員')
+        },
       },
       methods: {
         changePeriod(period) {
           this.periodSelect = period
-        }
-      },
-      computed: {
-        selectedMembers() {
-          return this.members.filter(x => x.period === this.periodSelect)
         },
-        allPeriods() {
-          return this.members.map(m => m.period).filter((id, index, ary) => ary.indexOf(id) === index).sort((a, b) => a - b)
-        }
+        async assignPeople() {
+          const resp = await fetch(`/personlist/personlist-${this.periodSelect}.json`)
+          const list = await resp.json()
+          this.people = list.map(x => {
+            let info = {
+              period: this.periodSelect,
+              type: x.type,
+              name: x.name,
+              meet_count: x.meet_count,
+              speech_count: x.speech_count,
+            }
+            if (x.type === "委員") {
+              info.period = this.periodSelect
+              info.photo = x.extra[2]
+              info.party = x.extra[3]
+            }
+
+            return info
+          })
+        },
+        sortByMeetCount() {
+          this.people.sort((a, b) => b.meet_count - a.meet_count)
+        },
+        sortBySpeechCount() {
+          this.people.sort((a, b) => b.speech_count - a.speech_count)
+        },
       },
     })
     app.component('person-card', {
@@ -85,11 +115,17 @@
         }
       },
       template: `
-          <div class="card me-2 mb-2" style="width: 18rem;">
-            <img :src="person.photo" class="card-img-top" :alt="person.name">
+          <div class="person-card card me-2 mb-2" style="width: 18rem;">
+            <img v-if="person.photo" :src="person.photo" class="card-img-top" :alt="person.name">
             <div class="card-body">
               <h5 class="card-title">{{ person.name }}</h5>
-              <p class="card-text">政黨：{{ person.party }}</p>
+              <p class="card-text">
+                <ul>
+                  <li>政黨：{{ person.party }}</li>
+                  <li>參與次數：{{ person.meet_count }}</li>
+                  <li>發言次數：{{ person.speech_count }}</li>
+                </ul>
+              </p>
               <a :href="href" class="btn btn-danger">前往個人頁</a>
             </div>
           </div>

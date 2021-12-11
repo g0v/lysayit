@@ -106,7 +106,7 @@ if (matches) {
             name_map[record[1]] = record[2];
         }
         
-        $.get(matches[1] + '.json', function(ret){
+        $.get('meets/' + matches[1] + '.json', function(ret){
                 $('#title').text(ret.title);
                 document.title = ret.title;
                 for (var idx in ret.blocks) {

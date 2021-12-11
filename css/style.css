@@ -21,3 +21,23 @@
   list-style: none;
   padding-left: 0;
 }
+
+.meeting-item {
+  display: flex;
+}
+
+.meeting-item * {
+  margin-right: 10px;
+}
+
+#speaker-app .info {
+  display: flex;
+  align-items: center;
+}
+#speaker-app .info .photo img {
+  width: 250px;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 25px;
+  border: 1px solid #ccc;
+}

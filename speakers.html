@@ -36,7 +36,12 @@
           <button class="btn btn-success" @click="sortBySpeechCount">以發言次數排序</button>
         </div>
         <h3>委員</h3>
-        <div id="members" class="mb-3">
+        <div v-if="!initialized" class="d-flex justify-content-center">
+          <div class="spinner-grow text-danger" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        <div v-else id="members" class="mb-3">
           <person-card
             v-for="person in selectedMembers"
             :key="person.name"
@@ -44,7 +49,12 @@
           />
         </div>
         <h3>非委員</h3>
-        <div id="non-members">
+        <div v-if="!initialized" class="d-flex justify-content-center">
+          <div class="spinner-grow text-danger" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        <div v-else id="non-members">
           <person-card
             v-for="person in selectedNonMembers"
             :key="person.name"
@@ -59,13 +69,15 @@
     const app = Vue.createApp({
       data() {
         return {
+          initialized: false,
           periods: [9, 10],
           periodSelect: 10,
           people: []
         }
       },
       async mounted() {
-        await this.assignPeople()
+        await this.fetchPeople()
+        this.initialized = true
       },
       computed: {
         selectedMembers() {
@@ -76,10 +88,13 @@
         },
       },
       methods: {
-        changePeriod(period) {
+        async changePeriod(period) {
           this.periodSelect = period
+          this.initialized = false
+          await this.fetchPeople()
+          this.initialized = true
         },
-        async assignPeople() {
+        async fetchPeople() {
           const resp = await fetch(`/personlist/personlist-${this.periodSelect}.json`)
           const list = await resp.json()
           this.people = list.map(x => {
@@ -100,10 +115,14 @@
           })
         },
         sortByMeetCount() {
+          this.initialized = false
           this.people.sort((a, b) => b.meet_count - a.meet_count)
+          this.initialized = true
         },
         sortBySpeechCount() {
+          this.initialized = false
           this.people.sort((a, b) => b.speech_count - a.speech_count)
+          this.initialized = true
         },
       },
     })

@@ -11,11 +11,11 @@
   <body>
     <div class="container">
       <nav id="header">
-        <h1><a href="/" class="text-danger">SayIt</a></h1>
+        <h1><a href="index.html" class="text-danger">SayIt</a></h1>
         <ul>
-          <li><a href="/" class="text-danger">首頁</a></li>
-          <li><a href="/speakers.html" class="text-danger">Speakers</a></li>
-          <li><a href="/speeches" class="text-danger">Speeches</a></li>
+          <li><a href="index.html" class="text-danger">首頁</a></li>
+          <li><a href="speakers.html" class="text-danger">Speakers</a></li>
+          <li><a href="index.html" class="text-danger">Speeches</a></li>
         </ul>
       </nav>
       <div id="speaker-app" class="mt-3">
@@ -63,7 +63,7 @@
             const urlSearchParams = new URLSearchParams(window.location.search);
             const period = urlSearchParams.get('period');
             const name = urlSearchParams.get('name');
-            const resp = await fetch(`/personlist/personlist-${period}.json`)
+            const resp = await fetch(`personlist/personlist-${period}.json`)
             const list = await resp.json()
             this.person = list.find(x => x.name === name)
           },
@@ -91,7 +91,7 @@
         props: ['meeting'],
         computed: {
           href() {
-            return `/speech.html?id=${this.meeting.id}`
+            return `speech.html?id=${this.meeting.id}`
           }
         },
         template: `

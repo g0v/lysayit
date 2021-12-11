@@ -2,5 +2,17 @@
   text-decoration: none;
 }
 
-#speakers-app {
+#header ul {
+  padding-left: 0;
+  display: flex;
+  list-style: none;
+}
+
+#header li {
+  margin-right: 30px;
+}
+
+#members, #non-members {
+  display: flex;
+  flex-wrap: wrap;
 }

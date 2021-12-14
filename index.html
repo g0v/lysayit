@@ -29,6 +29,18 @@
         </div>
     </div>
     <script>
+        function getGroupName(session, duration) {
+            if (session && duration) {
+                return '第' + group.session + '屆第' + group.duration + '會期';
+            }
+
+            if (session && !duration) {
+                return '第' + group.session + '屆';
+            }
+
+            return '其他';
+        }
+
         $.get('./list.json', function(ret) {
                 const grouped = ret.reduce(function(result, row) {
                     const session = row[2] ? parseInt(row[2]) : row[2];
@@ -71,6 +83,7 @@
 
                 const timeline = $('#timeline-groups');
                 for (const [key, group] of sorted_groups) {
+                    let group_name = getGroupName(group.session, group.duration);
 
                     const session_card = $(`
                     <div class="panel panel-default">
@@ -80,7 +93,7 @@
                             </div>
                             <h4 class="panel-title">
                                 <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#` + key + `" aria-expanded="false" aria-controls="` +  key + `">
-                                    第` + group.session + '屆第' + group.duration + `會期
+                                    ` + group_name + `
                                 </a>
                             </h4>
                         </div>

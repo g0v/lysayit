@@ -31,11 +31,11 @@
     <script>
         function getGroupName(session, duration) {
             if (session && duration) {
-                return '第' + group.session + '屆第' + group.duration + '會期';
+                return '第' + session + '屆第' + duration + '會期';
             }
 
             if (session && !duration) {
-                return '第' + group.session + '屆';
+                return '第' + session + '屆';
             }
 
             return '其他';

@@ -39,34 +39,11 @@
             </div>
             <div class="page-content__row">
                 <div class="primary-content__unit">
-                    <ul class="section-list">
-
-
-                    </ul>
-
-
-
-
-
-
-
+                    <ul class="section-list"></ul>
                 </div><!-- close primary-content__unit -->
-
                 <div class="sidebar__unit section-detail-sidebar">
-
-
-
-
                 </div><!-- close sidebar__unit -->
-
             </div><!-- close page-content_row -->
-
-
-
-
-
-
-
         </div>
     </div>
 </div>
@@ -84,7 +61,6 @@
 <div class="speech-wrapper">
     <div class="speech__meta-data">
         <span class="speech__meta-data__speaker-name">
-            <a href=""></a>
         </span>
     </div>
     <div class="speech__content">
@@ -96,57 +72,162 @@
 </li>
 </script>
 <script>
-var matches = document.location.href.match(/id=([^&#]+)(#line-(.*))?/);
-if (matches) {
-    var person_data;
-    var name_map = {};
-    $.get('person.json', function(ret){
-        person_data = ret;
-        for (var record of person_data) {
-            name_map[record[1]] = record[2];
+(async () => {
+    var matches = document.location.href.match(/id=([^&#]+)(#line-(.*))?/);
+    if (!matches) {
+        console.error('invalid id');
+        return;
+    }
+    const meeting_id = matches[1];
+    const target_lineno = matches[3];
+    let title = '';
+
+    const [speech, meetings] = await Promise.all([
+        $.get('https://lysayit.g0v.ronny.tw/api/speech/' + meeting_id, undefined, undefined, 'json'),
+        $.get('https://lysayit.g0v.ronny.tw/api/meet', undefined, undefined, 'json'),
+    ]);
+    if (speech.length === 0) {
+        return;
+    }
+
+    for(const meeting of meetings) {
+        if (meeting.id === meeting_id) {
+            title = meeting.title;
+        }
+    }
+
+    const persons = await $.get('https://lysayit.g0v.ronny.tw/api/term/' + speech[0]['term'] + "/speaker", undefined, undefined, 'json');
+    const portrait_map = {};
+    for (const p of persons) {
+        if (!p.extra) {
+            continue;
         }
 
-        $.get('meets/' + matches[1] + '.json', function(ret){
-                $('#title').text(ret.title);
-                document.title = ret.title;
-                for (var idx in ret.blocks) {
-                    var block = ret.blocks[idx];
-                    var dom = $($('#tmpl-talk').html());
-                    var name = block[0].split('：')[0];
-                    if (name == '段落') {
-                        var a_dom = $('<a></a>').attr('href', '#line-' + ret.block_lines[idx]).text(block[0].replace(/段落：/, ''));
-                        $('#sections').append($('<li></li>').append(a_dom));
-                    }
-                    $('.speech__meta-data__speaker-name a', dom).text(name);
-                    block[0] = block[0].substr(name.length + 1);
-                    if (name == '主席') {
-                        name = ret['主席'];
-                    }
-                    name = name.replace('委員', '');
-                    $(dom).attr('id', 'line-' + ret.block_lines[idx]);
-                    $('.speech__links a', dom).attr('href', '#line-' + ret.block_lines[idx]);
-                    if (typeof(name_map[name]) !== 'undefined') {
-                        $('img.speaker-portrait', dom).attr('src', name_map[name]);
-                    } else {
-                        $('img.speaker-portrait', dom).attr('src', 'https://sayit.pdis.nat.gov.tw/static/speeches/i/a.png');
-                    }
-                    for (var line of block) {
-                        $('.speech__content', dom).append($('<p></p>').text(line));
-                    }
-                    $('.section-list').append(dom);
-                }
-                if (matches[3]) {
-                    var aTag = $('#line-' + matches[3]);
-                    $('html,body').animate({scrollTop: aTag.offset().top},'slow');
-                }
-                console.log(ret);
-                for (var c of ['地點', '時間', '主席']) {
-                    if (ret[c]) {
-                        $('#meta').append($('<dd></dd>').text(c)).append($('<dt></dt>').text(ret[c]));
-                    }
-                }
-        }, 'json');
-    }, 'json');
+        portrait_map[p.name] = p.extra[2];
+    }
+
+    const term = speech[0].term;
+    let [location, time, chairman] = fetchMeetingInformation(speech[0].content);
+    if (!chairman) {
+        [location, time, chairman] = fetchMeetingInformation(speech[1].content);
+    }
+
+    for (const idx in speech) {
+        const speaker = normalizeSpeaker(speech[idx].speaker, chairman);
+
+        speech[idx].speaker = speaker;
+        if (speaker in portrait_map) {
+            speech[idx].portrait = portrait_map[speaker];
+            speech[idx].speaker_url = 'speaker.html?period=' + term + '&name=' + speaker;
+        } else {
+            speech[idx].portrait = 'https://sayit.pdis.nat.gov.tw/static/speeches/i/a.png';
+            speech[idx].speaker_url = '';
+        }
+    }
+
+    render(title, location, time, chairman, speech, target_lineno);
+})();
+
+function fetchMeetingInformation(lines) {
+    let location = '';
+    let time = '';
+    let chairman = '';
+
+    for (const line of lines) {
+        let matches = line.match(/時 *間：(.+)/);
+        if (matches) {
+            time = matches[1];
+            continue;
+        }
+        
+        matches = line.match(/地 *點：(.+)/);
+        if (matches) {
+            location = matches[1];
+            continue;
+        }
+        
+        matches = line.match(/主 *席：(.+)/);
+        if (matches) {
+            chairman = normalizeSpeaker(matches[1]);
+            continue;
+        }
+    }
+
+    return [location, time, chairman];
+}
+
+function normalizeSpeaker(speaker, chairman) {
+    if (speaker === '主席') {
+        return chairman || '主席';
+    }
+
+    speaker = speaker.replace('召集委員', '');
+    speaker = speaker.replace('委員', '');
+    speaker = speaker.replace('副', '');
+    speaker = speaker.replace('秘書長', '');
+    speaker = speaker.replace('主任', '');
+    speaker = speaker.replace('專門', '');
+    speaker = speaker.replace('部長', '');
+    speaker = speaker.replace('次長', '');
+    speaker = speaker.replace('局長', '');
+    speaker = speaker.replace('處長', '');
+    speaker = speaker.replace('司長', '');
+    speaker = speaker.replace('署長', '');
+    speaker = speaker.replace('廳長', '');
+    speaker = speaker.replace('院長', '');
+
+    return speaker;
+}
+
+function render(title, location, time, chairman, speech, target_lineno) {
+    $('#title').text(title);
+    document.title = title;
+
+    if (location) {
+        $('#meta').append($('<dd></dd>').text('地點')).append($('<dt></dt>').text(location));
+    }
+    if (time) {
+        $('#meta').append($('<dd></dd>').text('時間')).append($('<dt></dt>').text(time));
+    }
+    if (chairman) {
+        $('#meta').append($('<dd></dd>').text('主席')).append($('<dt></dt>').text(chairman));
+    }
+
+    for (const block of speech) {
+        const dom = $($('#tmpl-talk').html());
+        const speaker_name = $('.speech__meta-data__speaker-name', dom);
+
+        if (block.speaker === '段落') {
+            const a_dom = $('<a></a>')
+                .attr('href', '#line-' + block.lineno)
+                .text(block.content[0].replace(/段落：/, ''));
+            $('#sections').append($('<li></li>').append(a_dom));
+        }
+
+        if (!block.speaker_url) {
+            speaker_name.text(block.speaker);
+        } else {
+            const a_dom = $('<a></a>')
+                .attr('href', block.speaker_url)
+                .text(block.speaker);
+            speaker_name.append(a_dom);
+        }
+
+        dom.attr('id', 'line-' + block.lineno);
+        $('img.speaker-portrait', dom).attr('src', block.portrait);
+        $('.speech__links a', dom).attr('href', '#line-' + block.lineno);
+
+        for (const line of block.content) {
+            $('.speech__content', dom).append($('<p></p>').text(line));
+        }
+
+        $('.section-list').append(dom);
+    }
+
+    if (target_lineno) {
+        var aTag = $('#line-' + target_lineno);
+        $('html,body').animate({scrollTop: aTag.offset().top}, 'slow');
+    }
 }
 </script>
 </body>

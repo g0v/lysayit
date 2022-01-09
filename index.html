@@ -41,10 +41,10 @@
             return '其他';
         }
 
-        $.get('./list.json', function(ret) {
+        $.get('https://lysayit.g0v.ronny.tw/api/meet', function(ret) {
                 const grouped = ret.reduce(function(result, row) {
-                    const session = row[2] ? parseInt(row[2]) : row[2];
-                    const duration = row[3] ? parseInt(row[3]) : row[3];
+                    const session = row.term ? parseInt(row.term) : row.term;
+                    const duration = row.sessionPeriod ? parseInt(row.sessionPeriod) : row.sessionPeriod;
                     const id = session + '_' + duration;
 
                     if (id in result) {
@@ -104,7 +104,7 @@
 
                     const card_body = session_card.find('.panel-body');
                     for (var record of group.rows) {
-                        const speech_link = $('<a></a>').attr('href', 'speech.html?id=' + encodeURIComponent(record[0])).text(record[1]);
+                        const speech_link = $('<a></a>').attr('href', 'speech.html?id=' + encodeURIComponent(record.id)).text(record.title);
                         card_body.append('<div></div>').append(speech_link);
                     }
 

@@ -82,6 +82,9 @@
   const meeting_id = matches[1];
   const target_lineno = matches[3];
   let title = '';
+  let location = '';
+  let time = '';
+  let chairman = '';
 
   const [speech, meetings] = await Promise.all([
     $.get('https://lysayit.g0v.ronny.tw/api/speech/' + meeting_id, undefined, undefined, 'json'),
@@ -94,6 +97,9 @@
   for(const meeting of meetings) {
     if (meeting.id === meeting_id) {
       title = meeting.title;
+      location = meeting.extra['地點'];
+      time = meeting.extra['時間'];
+      chairman = normalizeSpeaker(meeting.extra['主席']);
     }
   }
 
@@ -108,11 +114,6 @@
   }
 
   const term = speech[0].term;
-  let [location, time, chairman] = fetchMeetingInformation(speech[0].content);
-  if (!chairman) {
-    [location, time, chairman] = fetchMeetingInformation(speech[1].content);
-  }
-
   for (const idx in speech) {
     const speaker = normalizeSpeaker(speech[idx].speaker, chairman);
 

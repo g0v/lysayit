@@ -27,34 +27,48 @@
       </nav>
       <main>
         <h2 class="mb-3">第{{ periodSelect }}屆國會</h2>
-        <div class="d-flex mb-3">
-          <button class="btn btn-success me-1" @click="sortByMeetCount">以參與次數排序</button>
-          <button class="btn btn-success" @click="sortBySpeechCount">以發言次數排序</button>
-        </div>
-        <h3>委員</h3>
         <div v-if="!initialized" class="d-flex justify-content-center">
           <div class="spinner-grow text-danger" role="status">
             <span class="visually-hidden">Loading...</span>
           </div>
         </div>
-        <div v-else id="members" class="mb-3">
-          <person-card
-            v-for="person in selectedMembers"
-            :key="person.name"
-            :person="person"
+        <div v-else>
+          <div class="d-flex mb-3">
+            <button class="btn btn-success me-1" @click="sortByMeetCount">以參與次數排序</button>
+            <button class="btn btn-success" @click="sortBySpeechCount">以發言次數排序</button>
+          </div>
+          <div class="d-flex mb-3 query-form col-3">
+            <input id="query" type="text" class="form-control" placeholder="搜尋" v-model="query">
+          </div>
+          <h3>委員</h3>
+          <div id="members" class="row mb-3">
+            <div
+              v-for="person in pagedMembers"
+              :key="person.name"
+              class="col-2"
+            >
+              <person-card :person="person" class="mb-3" />
+            </div>
+          </div>
+          <pagination
+            :page="MPPage"
+            :total="MPTotalPages"
+            @page-change="MPPage = $event"
           />
-        </div>
-        <h3>非委員</h3>
-        <div v-if="!initialized" class="d-flex justify-content-center">
-          <div class="spinner-grow text-danger" role="status">
-            <span class="visually-hidden">Loading...</span>
+          <h3>非委員</h3>
+          <div id="non-members" class="row mb-3">
+            <div
+              v-for="person in pagedNonMembers"
+              :key="person.name"
+              class="col-2"
+            >
+              <person-card :person="person" class="mb-3" />
+            </div>
           </div>
-        </div>
-        <div v-else id="non-members">
-          <person-card
-            v-for="person in selectedNonMembers"
-            :key="person.name"
-            :person="person"
+          <pagination
+            :page="nonMPPage"
+            :total="nonMPTotalPages"
+            @page-change="nonMPPage = $event"
           />
         </div>
       </main>
@@ -68,7 +82,11 @@
           initialized: false,
           periods: [9, 10],
           periodSelect: 10,
-          people: []
+          people: [],
+          MPPage: 1,
+          nonMPPage: 1,
+          query: '',
+          pageSize: 12
         }
       },
       async mounted() {
@@ -77,10 +95,30 @@
       },
       computed: {
         selectedMembers() {
-          return this.people.filter(x => x.type === '委員')
+          let members = this.people.filter(x => x.type === 0) // 0:委員
+          if(this.query.length > 0) {
+            members = members.filter(x => x.name.includes(this.query) || x.party.includes(this.query))
+          }
+          return members
+        },
+        pagedMembers() {
+          return this.selectedMembers.slice((this.MPPage - 1) * this.pageSize, this.MPPage * this.pageSize)
         },
         selectedNonMembers() {
-          return this.people.filter(x => x.type === '非委員')
+          let nonMembers = this.people.filter(x => x.type === 1) // 1:非委員
+          if(this.query.length > 0) {
+            nonMembers = nonMembers.filter(x => x.name.includes(this.query))
+          }
+          return nonMembers
+        },
+        pagedNonMembers() {
+          return this.selectedNonMembers.slice((this.nonMPPage - 1) * this.pageSize, this.nonMPPage * this.pageSize)
+        },
+        MPTotalPages() {
+          return Math.ceil(this.selectedMembers.length / this.pageSize)
+        },
+        nonMPTotalPages() {
+          return Math.ceil(this.selectedNonMembers.length / this.pageSize)
         },
       },
       methods: {
@@ -130,7 +168,7 @@
         }
       },
       template: `
-          <div class="person-card card me-2 mb-2" style="width: 18rem;">
+          <div class="person-card card">
             <img v-if="person.photo" :src="person.photo" class="card-img-top" :alt="person.name">
             <div class="card-body">
               <h5 class="card-title">{{ person.name }}</h5>
@@ -145,6 +183,90 @@
             </div>
           </div>
         `
+    })
+    app.component('pagination', {
+      props: ['page', 'total'],
+      computed: {
+        pagesRange() {
+          const range = []
+          for (let i = this.page - 3; i <= this.total && i <= this.page + 3; i++) {
+            if (i >= 1) {
+              range.push(i)
+            }
+          }
+          return range
+        }
+      },
+      methods: {
+        onClick(page) {
+          this.$emit('page-change', page)
+        },
+        prevPage() {
+          if(this.page > 1) {
+            this.$emit('page-change', this.page - 1)
+          }
+        },
+        nextPage() {
+          if(this.page < this.total) {
+            this.$emit('page-change', this.page + 1)
+          }
+        },
+      },
+      template: `
+      <nav>
+        <ul class="pagination">
+          <li
+            class="page-item"
+            @click="prevPage"
+          >
+            <a class="page-link" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+          <li
+            v-if="pagesRange[0] > 1"
+            class="page-item"
+          >
+            <a
+              class="page-link"
+              href="#"
+            >
+              ...
+            </a>
+          </li>
+          <li
+            v-for="number in pagesRange"
+            :key="number"
+            class="page-item"
+          >
+            <a
+              class="page-link"
+              @click.stop.prevent="onClick(number)"
+            >{{ number }}
+            </a>
+          </li>
+          <li
+            v-if="pagesRange[pagesRange.length - 1] < total - 1"
+            class="page-item"
+          >
+            <a
+              class="page-link"
+              href="#"
+            >
+              ...
+            </a>
+          </li>
+          <li
+            class="page-item"
+            @click="nextPage"
+          >
+            <a class="page-link" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      `
     })
 
     app.mount('#speakers-app')

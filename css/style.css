@@ -12,14 +12,18 @@
   margin-right: 30px;
 }
 
-#members, #non-members {
+/* #members, #non-members {
   display: flex;
   flex-wrap: wrap;
-}
+} */
 
 #person-card ul {
   list-style: none;
   padding-left: 0;
+}
+
+.page-link {
+  cursor: pointer;
 }
 
 .meeting-item {

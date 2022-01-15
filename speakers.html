@@ -38,7 +38,14 @@
             <button class="btn btn-success" @click="sortBySpeechCount">以發言次數排序</button>
           </div>
           <div class="d-flex mb-3 query-form col-3">
-            <input id="query" type="text" class="form-control" placeholder="搜尋" v-model="query">
+            <input
+              id="query"
+              type="text"
+              class="form-control"
+              placeholder="搜尋"
+              v-model="query"
+              @keyup="resetPages"
+            >
           </div>
           <h3>委員</h3>
           <div id="members" class="row mb-3">
@@ -151,13 +158,19 @@
         sortByMeetCount() {
           this.initialized = false
           this.people.sort((a, b) => b.meet_count - a.meet_count)
+          this.resetPages()
           this.initialized = true
         },
         sortBySpeechCount() {
           this.initialized = false
           this.people.sort((a, b) => b.speech_count - a.speech_count)
+          this.resetPages()
           this.initialized = true
         },
+        resetPages() {
+          this.MPPage = 1
+          this.nonMPPage = 1
+        }
       },
     })
     app.component('person-card', {
@@ -238,6 +251,7 @@
             v-for="number in pagesRange"
             :key="number"
             class="page-item"
+            :class="{'active': number === page}"
           >
             <a
               class="page-link"

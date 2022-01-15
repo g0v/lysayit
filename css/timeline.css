@@ -9,10 +9,7 @@
 .timeline {
   position: relative;
   width: 100%;
-  float: left;
-  position: relative;
   padding: 0 0 0 0;
-  margin-top: 4px;
 }
 .timeline .panel-group {
   padding-bottom: 8px;
@@ -35,6 +32,9 @@
   background: none;
   -webkit-box-shadow: none;
   box-shadow: none;
+}
+.timeline .panel:last-child {
+  margin-bottom: 40px;
 }
 .timeline .panel > .panel-heading .icon {
   position: absolute;

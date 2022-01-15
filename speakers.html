@@ -91,8 +91,8 @@
           this.initialized = true
         },
         async fetchPeople() {
-          const resp = await fetch(`personlist/personlist-${this.periodSelect}.json`)
-          const list = await resp.json()
+          const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/term/${this.periodSelect}/speaker`)
+          let list = await resp.json()
           this.people = list.map(x => {
             let info = {
               period: this.periodSelect,
@@ -101,7 +101,7 @@
               meet_count: x.meet_count,
               speech_count: x.speech_count,
             }
-            if (x.type === "委員") {
+            if (x.type === 0) { // 0:委員, 1:非委員
               info.period = this.periodSelect
               info.photo = x.extra[2]
               info.party = x.extra[3]

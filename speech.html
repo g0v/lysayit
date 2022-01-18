@@ -5,229 +5,235 @@
 <title>立法院會議記錄</title>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <link href="https://sayit.pdis.nat.gov.tw/static/speeches/css/speeches.css" rel="stylesheet" type="text/css">
-
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+<link href="css/style.css" rel="stylesheet" type="text/css">
 </head>
-<body id="top">
+<body>
 
-<header>
-    <div class="full-page__row">
-        <div class="full-page__unit">
-            <h1><a href="/">SayIt</a></h1>
+  <div class="container">
+    <nav id="header">
+      <h1><a href="/" class="text-danger">SayIt</a></h1>
+      <ul>
+        <li><a href="index.html" class="text-danger">首頁</a></li>
+        <li><a href="speakers.html" class="text-danger">Speakers</a></li>
+        <li><a href="index.html" class="text-danger">Speeches</a></li>
+      </ul>
+    </nav>
 
-            <ul class="inline-list left">
-                <li><a href="index.html">首頁</a></li>
-                <li><a href="speakers.html">Speakers</a></li>
-                <li><a href="index.html">Speeches</a></li>
-            </ul>
-            <ul class="unstyled-list right">
-            </ul>
+    <div class="full-page">
+      <div id="loading" class="d-flex justify-content-center">
+        <div class="spinner-grow text-danger" role="status">
+          <span class="visually-hidden">Loading...</span>
         </div>
-    </div>
-</header>
-
-<div class="full-page">
-    <div class="full-page__row">
+      </div>
+      <div class="full-page__row">
         <div class="full-page__unit">
-            <div class="page-header page-header--speech">
-                <ul class="breadcrumbs">
-                </ul>
-                <h1 id="title"></h1>
-                <dl id="meta">
-                </dl>
-                <ul id="sections">
-                </ul>
-            </div>
-            <div class="page-content__row">
-                <div class="primary-content__unit">
-                    <ul class="section-list"></ul>
-                </div><!-- close primary-content__unit -->
-                <div class="sidebar__unit section-detail-sidebar">
-                </div><!-- close sidebar__unit -->
-            </div><!-- close page-content_row -->
+          <div class="page-header page-header--speech">
+            <ul class="breadcrumbs">
+            </ul>
+            <h1 id="title"></h1>
+            <dl id="meta">
+            </dl>
+            <ul id="sections">
+            </ul>
+          </div>
+          <div class="page-content__row">
+            <div class="primary-content__unit">
+              <ul class="section-list"></ul>
+            </div><!-- close primary-content__unit -->
+            <div class="sidebar__unit section-detail-sidebar">
+            </div><!-- close sidebar__unit -->
+          </div><!-- close page-content_row -->
         </div>
+      </div>
     </div>
-</div>
+  </div>
 
 <footer style="position: relative; margin-bottom: 2vh; text-align: center">
-    <!--<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="創用 CC 授權條款" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" ></a>  本站除另有標示外，內容皆以<a rel="license" href="http://creativecommons.org/licenses/by/4.0/">創用 CC 姓名標示 4.0 國際 授權條款</a>授權釋出 -->
-    <p style="font-size: 1em; font-weight: bold">本站除另有標示外，內容以創用 CC0 授權條款釋出</p>
+  <!--<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="創用 CC 授權條款" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" ></a>  本站除另有標示外，內容皆以<a rel="license" href="http://creativecommons.org/licenses/by/4.0/">創用 CC 姓名標示 4.0 國際 授權條款</a>授權釋出 -->
+  <p style="font-size: 1em; font-weight: bold">本站除另有標示外，內容以創用 CC0 授權條款釋出</p>
 </footer>
 <script type="text/html" id="tmpl-talk">
 <li class="speech speech--with-portrait speech-- speech--border" style="border-left-color: #1bdf1a;">
 <div class="speaker-portrait-wrapper">
-    <img src=""
-    style="border-color: #1bdf1a; background-color: #1bdf1a;" alt=""  class="speaker-portrait speaker-portrait--left round-image speaker-portrait--medium">
+  <img src=""
+  style="border-color: #1bdf1a; background-color: #1bdf1a;" alt=""  class="speaker-portrait speaker-portrait--left round-image speaker-portrait--medium">
 </div>
 <div class="speech-wrapper">
-    <div class="speech__meta-data">
-        <span class="speech__meta-data__speaker-name">
-        </span>
-    </div>
-    <div class="speech__content">
-    </div>
-    <div class="speech__links">
-        <a title="Link in context" href=""><i class="speech-icon icon-link-in-context"></i>Link in context</a>
-    </div>
+  <div class="speech__meta-data">
+    <span class="speech__meta-data__speaker-name">
+    </span>
+  </div>
+  <div class="speech__content">
+  </div>
+  <div class="speech__links">
+    <a title="Link in context" href=""><i class="speech-icon icon-link-in-context"></i>Link in context</a>
+  </div>
 </div>
 </li>
 </script>
 <script>
 (async () => {
-    var matches = document.location.href.match(/id=([^&#]+)(#line-(.*))?/);
-    if (!matches) {
-        console.error('invalid id');
-        return;
+  var matches = document.location.href.match(/id=([^&#]+)(#line-(.*))?/);
+  if (!matches) {
+    console.error('invalid id');
+    return;
+  }
+  const meeting_id = matches[1];
+  const target_lineno = matches[3];
+  let title = '';
+  let location = '';
+  let time = '';
+  let chairman = '';
+
+  const [speech, meetings] = await Promise.all([
+    $.get('https://lysayit.g0v.ronny.tw/api/speech/' + meeting_id, undefined, undefined, 'json'),
+    $.get('https://lysayit.g0v.ronny.tw/api/meet', undefined, undefined, 'json'),
+  ]);
+  if (speech.length === 0) {
+    return;
+  }
+
+  for(const meeting of meetings) {
+    if (meeting.id === meeting_id) {
+      title = meeting.title;
+      location = meeting.extra['地點'];
+      time = meeting.extra['時間'];
+      chairman = normalizeSpeaker(meeting.extra['主席']);
     }
-    const meeting_id = matches[1];
-    const target_lineno = matches[3];
-    let title = '';
+  }
 
-    const [speech, meetings] = await Promise.all([
-        $.get('https://lysayit.g0v.ronny.tw/api/speech/' + meeting_id, undefined, undefined, 'json'),
-        $.get('https://lysayit.g0v.ronny.tw/api/meet', undefined, undefined, 'json'),
-    ]);
-    if (speech.length === 0) {
-        return;
-    }
-
-    for(const meeting of meetings) {
-        if (meeting.id === meeting_id) {
-            title = meeting.title;
-        }
-    }
-
-    const persons = await $.get('https://lysayit.g0v.ronny.tw/api/term/' + speech[0]['term'] + "/speaker", undefined, undefined, 'json');
-    const portrait_map = {};
-    for (const p of persons) {
-        if (!p.extra) {
-            continue;
-        }
-
-        portrait_map[p.name] = p.extra[2];
-    }
-
-    const term = speech[0].term;
-    let [location, time, chairman] = fetchMeetingInformation(speech[0].content);
-    if (!chairman) {
-        [location, time, chairman] = fetchMeetingInformation(speech[1].content);
+  const persons = await $.get('https://lysayit.g0v.ronny.tw/api/term/' + speech[0]['term'] + "/speaker", undefined, undefined, 'json');
+  const portrait_map = {};
+  for (const p of persons) {
+    if (!p.extra) {
+      continue;
     }
 
-    for (const idx in speech) {
-        const speaker = normalizeSpeaker(speech[idx].speaker, chairman);
+    portrait_map[p.name] = p.extra[2];
+  }
 
-        speech[idx].speaker = speaker;
-        if (speaker in portrait_map) {
-            speech[idx].portrait = portrait_map[speaker];
-            speech[idx].speaker_url = 'speaker.html?period=' + term + '&name=' + speaker;
-        } else {
-            speech[idx].portrait = 'https://sayit.pdis.nat.gov.tw/static/speeches/i/a.png';
-            speech[idx].speaker_url = '';
-        }
+  const term = speech[0].term;
+  for (const idx in speech) {
+    const speaker = normalizeSpeaker(speech[idx].speaker, chairman);
+
+    speech[idx].speaker = speaker;
+    if (speaker in portrait_map) {
+      speech[idx].portrait = portrait_map[speaker];
+      speech[idx].speaker_url = 'speaker.html?period=' + term + '&name=' + speaker;
+    } else {
+      speech[idx].portrait = 'https://sayit.pdis.nat.gov.tw/static/speeches/i/a.png';
+      speech[idx].speaker_url = '';
     }
+  }
 
-    render(title, location, time, chairman, speech, target_lineno);
+  render(title, location, time, chairman, speech, target_lineno);
 })();
 
 function fetchMeetingInformation(lines) {
-    let location = '';
-    let time = '';
-    let chairman = '';
+  let location = '';
+  let time = '';
+  let chairman = '';
 
-    for (const line of lines) {
-        let matches = line.match(/時 *間：(.+)/);
-        if (matches) {
-            time = matches[1];
-            continue;
-        }
-        
-        matches = line.match(/地 *點：(.+)/);
-        if (matches) {
-            location = matches[1];
-            continue;
-        }
-        
-        matches = line.match(/主 *席：(.+)/);
-        if (matches) {
-            chairman = normalizeSpeaker(matches[1]);
-            continue;
-        }
+  for (const line of lines) {
+    let matches = line.match(/時 *間：(.+)/);
+    if (matches) {
+      time = matches[1];
+      continue;
     }
+    
+    matches = line.match(/地 *點：(.+)/);
+    if (matches) {
+      location = matches[1];
+      continue;
+    }
+    
+    matches = line.match(/主 *席：(.+)/);
+    if (matches) {
+      chairman = normalizeSpeaker(matches[1]);
+      continue;
+    }
+  }
 
-    return [location, time, chairman];
+  return [location, time, chairman];
 }
 
 function normalizeSpeaker(speaker, chairman) {
-    if (speaker === '主席') {
-        return chairman || '主席';
-    }
+  if (speaker === '主席') {
+    return chairman || '主席';
+  }
 
-    speaker = speaker.replace('召集委員', '');
-    speaker = speaker.replace('委員', '');
-    speaker = speaker.replace('副', '');
-    speaker = speaker.replace('秘書長', '');
-    speaker = speaker.replace('主任', '');
-    speaker = speaker.replace('專門', '');
-    speaker = speaker.replace('部長', '');
-    speaker = speaker.replace('次長', '');
-    speaker = speaker.replace('局長', '');
-    speaker = speaker.replace('處長', '');
-    speaker = speaker.replace('司長', '');
-    speaker = speaker.replace('署長', '');
-    speaker = speaker.replace('廳長', '');
-    speaker = speaker.replace('院長', '');
+  speaker = speaker.replace('召集委員', '');
+  speaker = speaker.replace('委員', '');
+  speaker = speaker.replace('副', '');
+  speaker = speaker.replace('秘書長', '');
+  speaker = speaker.replace('主任', '');
+  speaker = speaker.replace('專門', '');
+  speaker = speaker.replace('部長', '');
+  speaker = speaker.replace('次長', '');
+  speaker = speaker.replace('局長', '');
+  speaker = speaker.replace('處長', '');
+  speaker = speaker.replace('司長', '');
+  speaker = speaker.replace('署長', '');
+  speaker = speaker.replace('廳長', '');
+  speaker = speaker.replace('院長', '');
 
-    return speaker;
+  return speaker;
 }
 
 function render(title, location, time, chairman, speech, target_lineno) {
-    $('#title').text(title);
-    document.title = title;
+  $('#title').text(title);
+  document.title = title;
 
-    if (location) {
-        $('#meta').append($('<dd></dd>').text('地點')).append($('<dt></dt>').text(location));
-    }
-    if (time) {
-        $('#meta').append($('<dd></dd>').text('時間')).append($('<dt></dt>').text(time));
-    }
-    if (chairman) {
-        $('#meta').append($('<dd></dd>').text('主席')).append($('<dt></dt>').text(chairman));
-    }
+  if (location) {
+    $('#meta').append($('<dd></dd>').text('地點')).append($('<dt></dt>').text(location));
+  }
+  if (time) {
+    $('#meta').append($('<dd></dd>').text('時間')).append($('<dt></dt>').text(time));
+  }
+  if (chairman) {
+    $('#meta').append($('<dd></dd>').text('主席')).append($('<dt></dt>').text(chairman));
+  }
 
-    for (const block of speech) {
-        const dom = $($('#tmpl-talk').html());
-        const speaker_name = $('.speech__meta-data__speaker-name', dom);
+  const loading = $('#loading');
+  loading.html('');
 
-        if (block.speaker === '段落') {
-            const a_dom = $('<a></a>')
-                .attr('href', '#line-' + block.lineno)
-                .text(block.content[0].replace(/段落：/, ''));
-            $('#sections').append($('<li></li>').append(a_dom));
-        }
+  const session_list = $('.section-list');
+  for (const block of speech) {
+    const dom = $($('#tmpl-talk').html());
+    const speaker_name = $('.speech__meta-data__speaker-name', dom);
 
-        if (!block.speaker_url) {
-            speaker_name.text(block.speaker);
-        } else {
-            const a_dom = $('<a></a>')
-                .attr('href', block.speaker_url)
-                .text(block.speaker);
-            speaker_name.append(a_dom);
-        }
-
-        dom.attr('id', 'line-' + block.lineno);
-        $('img.speaker-portrait', dom).attr('src', block.portrait);
-        $('.speech__links a', dom).attr('href', '#line-' + block.lineno);
-
-        for (const line of block.content) {
-            $('.speech__content', dom).append($('<p></p>').text(line));
-        }
-
-        $('.section-list').append(dom);
+    if (block.speaker === '段落') {
+      const a_dom = $('<a></a>')
+        .attr('href', '#line-' + block.lineno)
+        .text(block.content[0].replace(/段落：/, ''));
+      $('#sections').append($('<li></li>').append(a_dom));
     }
 
-    if (target_lineno) {
-        var aTag = $('#line-' + target_lineno);
-        $('html,body').animate({scrollTop: aTag.offset().top}, 'slow');
+    if (!block.speaker_url) {
+      speaker_name.text(block.speaker);
+    } else {
+      const a_dom = $('<a></a>')
+        .attr('href', block.speaker_url)
+        .text(block.speaker);
+      speaker_name.append(a_dom);
     }
+
+    dom.attr('id', 'line-' + block.lineno);
+    $('img.speaker-portrait', dom).attr('src', block.portrait);
+    $('.speech__links a', dom).attr('href', '#line-' + block.lineno);
+
+    for (const line of block.content) {
+      $('.speech__content', dom).append($('<p></p>').text(line));
+    }
+
+    session_list.append(dom);
+  }
+
+  if (target_lineno) {
+    var aTag = $('#line-' + target_lineno);
+    $('html,body').animate({scrollTop: aTag.offset().top}, 'slow');
+  }
 }
 </script>
 </body>

@@ -99,7 +99,7 @@
       title = meeting.title;
       location = meeting.extra['地點'];
       time = meeting.extra['時間'];
-      if ('undefined' === typeof(meeting.extra['主席'])) {
+      if ('undefined' !== typeof(meeting.extra['主席'])) {
         chairman = normalizeSpeaker(meeting.extra['主席']);
       } else {
         chairman = '';

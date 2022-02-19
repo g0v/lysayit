@@ -98,6 +98,13 @@
       },
       async mounted() {
         await this.fetchPeople()
+        const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/stat`)
+        let list = await resp.json()
+        this.periods = [];
+        for (var term of list.terms) {
+            this.periods.push(term.term);
+        }
+        this.periodSelect = this.periods[this.periods.length - 1];
         this.initialized = true
       },
       computed: {

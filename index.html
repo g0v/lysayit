@@ -32,6 +32,22 @@
       </div>
     </div>
   </div>
+  <script id="tmpl-session-card" type="text/html">
+<div class="panel panel-default">
+ <div class="panel-heading" role="tab" id="heading">
+  <div class="icon"></div>
+  <div class="panel-title">
+   <div class="collapsed group unload" role="button" data-toggle="collapse" href="#" aria-expanded="false" aria-controls="">
+    <span class="group-name"></span>
+(會議數:<span class="meet-count"></span>) <span class="date-start"></span> ~ <span class="date-end"></span>
+   </div>
+  </div>
+ </div>
+ <div class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading">
+  <div class="panel-body">
+ </div>
+</div>
+  </script>
   <script>
     function getGroupName(session, duration) {
       if (session && duration) {
@@ -45,76 +61,55 @@
       return '其他';
     }
 
-   $.get('https://lysayit.g0v.ronny.tw/api/meet', function(ret) {
-       const grouped = ret.reduce(function(result, row) {
-         const session = row.term ? parseInt(row.term) : row.term;
-         const duration = row.sessionPeriod ? parseInt(row.sessionPeriod) : row.sessionPeriod;
-         const id = session + '_' + duration;
+   $.get('https://lysayit.g0v.ronny.tw/api/stat', function(ret){
+     ret.terms = ret.terms.sort(function(a,b) { return b.term - a.term; });
+     $('#timeline-groups').html('');
+     for (var term_info of ret.terms) {
+       var period_records = term_info.periods;
+       term_info.periods = term_info.periods.sort(function(a,b){ return b.period - a.period; });
 
-         if (id in result) {
-           result[id].rows.push(row);
-         } else {
-           result[id] = {
-             session: session,
-             duration: duration,
-             rows: [row],
-           };
-         }
+       for (var period_info of period_records) {
+         let group_name = getGroupName(term_info.term, period_info.period);
+         var session_card = $($('#tmpl-session-card').html());
+         $('.group', session_card).data('term', term_info.term);
+         $('.group', session_card).data('period', period_info.period);
+         $('.group-name', session_card).text(group_name);
+         $('.meet-count', session_card).text(period_info.meet_count);
+         $('.date-start', session_card).text(period_info.date_min);
+         $('.date-end', session_card).text(period_info.date_max);
+         var id = 'session-' + term_info.term + '-' + period_info.period;
+         $('.group', session_card).attr('href', '#' + id).attr('aria-controls', id);
+         $('.panel-collapse', session_card).attr('id', id);
+         $('#timeline-groups').append(session_card);
+       }
+     }
+   }, 'json');
 
-         return result;
-       }, {});
+   $('#timeline-groups').on('click', '.group.unload', function(e){
+     var parent_dom = $(this).parents('.panel');
+     $('.panel-body', parent_dom).html('<div class="spinner-grow text-danger" role="status"><span class="visually-hidden">Loading...</span></div>');
+     $(this).removeClass('unload');
+     $.get('https://lysayit.g0v.ronny.tw/api/meet?limit=1000&term=' + $(this).data('term') + '&sessionPeriod=' + $(this).data('period'), function(ret){
+         const card_body = $('.panel-body', parent_dom);
+         card_body.html('');
 
-       const sorted_groups = Object.entries(grouped).sort(function(a, b) {
-         const sessionA = a[1].session;
-         const sessionB = b[1].session;
-         const durationA = a[1].duration;
-         const durationB = b[1].duration;
-
-         if (!sessionA) { return 1; }
-         if (!sessionB) { return -1; }
-
-         if (sessionA > sessionB) { return -1; }
-         if (sessionA < sessionB) { return 1; }
-
-         if (!durationA) { return 1; }
-         if (!durationB) { return -1; }
-         
-         if (durationA > durationB) {  return -1; }
-         if (durationA < durationB) { return 1;  }
-
-         return 0;
-       });
-
-       const timeline = $('#timeline-groups');
-       timeline.html('');
-
-       for (const [key, group] of sorted_groups) {
-         let group_name = getGroupName(group.session, group.duration);
-
-         const session_card = $(`
-         <div class="panel panel-default">
-           <div class="panel-heading" role="tab" id="heading">
-             <div class="icon"></div>
-             <div class="panel-title">
-               <div class="collapsed" role="button" data-toggle="collapse" href="#` + key + `" aria-expanded="false" aria-controls="` +  key + `">
-                 ` + group_name + `
-               </div>
-             </div>
-           </div>
-           <div id="` + key + `"class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading">
-           <div class="panel-body">
-           </div>
-         </div>`);
-
-         const card_body = session_card.find('.panel-body');
-         for (var record of group.rows) {
+         var date_month = null;
+         var date_day = null;
+         for (var record of ret) {
+           if (record.date.toString().substr(0, 6) != date_month) {
+             date_month = record.date.toString().substr(0, 6);
+             card_body.append($('<h3></h3>').text(date_month));
+           }
+           if (record.date != date_day) {
+             date_day = record.date;
+             card_body.append($('<h4></h4>').text(date_day));
+           }
            const speech_link = $('<a></a>').attr('href', 'speech.html?id=' + encodeURIComponent(record.id)).text(record.title);
            card_body.append('<div></div>').append(speech_link);
          }
+     }, 'json');
+   });
 
-         timeline.append(session_card);
-       }
-   }, 'json');
   </script>
 </body>
 

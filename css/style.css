@@ -34,6 +34,14 @@
   margin-right: 10px;
 }
 
+.voting-item {
+  display: flex;
+}
+
+.voting-item * {
+  margin-right: 10px;
+}
+
 #speaker-app .info {
   display: flex;
   align-items: center;

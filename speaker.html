@@ -57,9 +57,15 @@
     <script>
       const app = Vue.createApp({
         data() {
+          const urlSearchParams = new URLSearchParams(window.location.search);
+
           return {
             initialized: false,
-            person: {},
+            person: {
+              name: urlSearchParams.get('name'),
+              meet_count: 0,
+              speech_count: 0,
+            },
             meetings: [],
             votes: [],
           }
@@ -72,11 +78,16 @@
         methods: {
           async fetchPerson() {
             const urlSearchParams = new URLSearchParams(window.location.search);
-            const period = urlSearchParams.get('period');
+            const period = parseInt(urlSearchParams.get('period'));
             const name = urlSearchParams.get('name');
-            const resp = await fetch(`personlist/personlist-${period}.json`)
-            const list = await resp.json()
-            this.person = list.find(x => x.name === name)
+            const resp = await fetch(`personlist/personlist-${period}.json`);
+
+            try {
+              const list = await resp.json();
+              this.person = list.find(x => x.name === name) || this.person;
+            } catch(e) {
+              console.warn('no person data');
+            }
           },
           async fetchVotings() {
             const urlSearchParams = new URLSearchParams(window.location.search);
@@ -101,17 +112,21 @@
             const name = urlSearchParams.get('name');
             const filename = `person-${period}-${name}.json`;
             const resp = await fetch(`person/${filename}`)
-            const data = await resp.json();
-            this.meetings = data.map(m => {
-              return {
-                id: m[0],
-                title: m[1],
-                period: m[2],
-                episode: m[3],
-                date: m[4],
-                speech_count: m[5]
-              }
-            });
+            try {
+              const data = await resp.json();
+              this.meetings = data.map(m => {
+                return {
+                  id: m[0],
+                  title: m[1],
+                  period: m[2],
+                  episode: m[3],
+                  date: m[4],
+                  speech_count: m[5]
+                }
+              });
+            } catch(e) {
+              console.warn('no meeting data');
+            }
           },
         }
       })

@@ -124,7 +124,7 @@
     speech[idx].speaker = speaker;
     if (speaker in portrait_map) {
       speech[idx].portrait = portrait_map[speaker];
-      speech[idx].speaker_url = 'speaker.html?period=' + term + '&name=' + speaker;
+      speech[idx].speaker_url = 'speaker.html?term=' + term + '&name=' + speaker;
     } else {
       speech[idx].portrait = 'https://sayit.pdis.nat.gov.tw/static/speeches/i/a.png';
       speech[idx].speaker_url = '';

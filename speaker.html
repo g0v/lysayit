@@ -100,9 +100,9 @@
         methods: {
           async fetchPerson() {
             const urlSearchParams = new URLSearchParams(window.location.search);
-            const period = parseInt(urlSearchParams.get('period'));
+            const term = parseInt(urlSearchParams.get('term'));
             const name = urlSearchParams.get('name');
-            const resp = await fetch(`personlist/personlist-${period}.json`);
+            const resp = await fetch(`personlist/personlist-${term}.json`);
 
             try {
               const list = await resp.json();
@@ -134,7 +134,7 @@
           },
           async fetchMeetings(page) {
             const urlSearchParams = new URLSearchParams(window.location.search);
-            const term = urlSearchParams.get('period');
+            const term = urlSearchParams.get('term');
             const name = urlSearchParams.get('name');
             const limit = 20;
             const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/speaker/${name}/meet?limit=${limit}&page=${page}&term=${term}`);
@@ -154,8 +154,8 @@
                 return {
                   id: m.id,
                   title: m.title,
-                  period: m.term,
-                  episode: m.sessionPeriod,
+                  term: m.term,
+                  session_period: m.sessionPeriod,
                   date: m.date,
                   speech_count: speech_count,
                 }

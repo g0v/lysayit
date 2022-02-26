@@ -67,3 +67,11 @@
   text-decoration: none;
   color: #333;
 }
+.timeline .meet-card {
+  margin: 3px;
+  padding: 0 4px;
+  display: inline-block;
+}
+.timeline .trigger {
+  cursor: pointer;
+}

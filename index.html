@@ -22,7 +22,7 @@
       </ul>
     </nav>
     <div class="timeline">
-      <div class="line text-muted"></div>
+      <div class="line"></div>
       <div id="timeline-groups" class="panel-group" role="tablist" aria-multiselectable="true">
         <div class="d-flex justify-content-center">
           <div class="spinner-grow text-danger" role="status">
@@ -34,18 +34,23 @@
   </div>
   <script id="tmpl-session-card" type="text/html">
 <div class="panel panel-default">
- <div class="panel-heading" role="tab" id="heading">
+ <div class="panel-heading" role="tab">
   <div class="icon"></div>
   <div class="panel-title">
-   <div class="collapsed group unload" role="button" data-toggle="collapse" href="#" aria-expanded="false" aria-controls="">
+   <div class="group unload">
     <span class="group-name"></span>
 (會議數:<span class="meet-count"></span>) <span class="date-start"></span> ~ <span class="date-end"></span>
    </div>
   </div>
  </div>
- <div class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading">
-  <div class="panel-body">
+ <div class="panel-collapse">
+   <div class="panel-body">
  </div>
+</div>
+  </script>
+  <script id="tmpl-meet-card" type="text/html">
+<div class="meet-card">
+  <a class="meet-desc"></a>
 </div>
   </script>
   <script>
@@ -59,6 +64,12 @@
       }
 
       return '其他';
+    }
+
+    function bindCollapsable(id, trigger, folder) {
+      trigger.attr('class', (trigger.attr('class') || '') + ' collapsed trigger');
+      trigger.attr('data-toggle', 'collapse').attr('href', '#' + id);
+      folder.attr('id', id).attr('class', (folder.attr('class') || '') + ' collapse');
     }
 
    $.get('https://lysayit.g0v.ronny.tw/api/stat', function(ret){
@@ -77,9 +88,10 @@
          $('.meet-count', session_card).text(period_info.meet_count);
          $('.date-start', session_card).text(period_info.date_min);
          $('.date-end', session_card).text(period_info.date_max);
+
          var id = 'session-' + term_info.term + '-' + period_info.period;
-         $('.group', session_card).attr('href', '#' + id).attr('aria-controls', id);
-         $('.panel-collapse', session_card).attr('id', id);
+         bindCollapsable(id, $('.group', session_card), $('.panel-collapse', session_card));
+
          $('#timeline-groups').append(session_card);
        }
      }
@@ -90,23 +102,51 @@
      $('.panel-body', parent_dom).html('<div class="spinner-grow text-danger" role="status"><span class="visually-hidden">Loading...</span></div>');
      $(this).removeClass('unload');
      $.get('https://lysayit.g0v.ronny.tw/api/meet?limit=1000&term=' + $(this).data('term') + '&sessionPeriod=' + $(this).data('period'), function(ret){
-         const card_body = $('.panel-body', parent_dom);
-         card_body.html('');
+        const meets_body = $('.panel-body', parent_dom);
+        meets_body.html('');
 
-         var date_month = null;
-         var date_day = null;
-         for (var record of ret) {
-           if (record.date.toString().substr(0, 6) != date_month) {
-             date_month = record.date.toString().substr(0, 6);
-             card_body.append($('<h3></h3>').text(date_month));
-           }
-           if (record.date != date_day) {
-             date_day = record.date;
-             card_body.append($('<h4></h4>').text(date_day));
-           }
-           const speech_link = $('<a></a>').attr('href', 'speech.html?id=' + encodeURIComponent(record.id)).text(record.title);
-           card_body.append('<div></div>').append(speech_link);
-         }
+        // grouping by title
+        for (var record of ret) {
+          const matched = record.title.match(/(.+會期(.*?))(第(\d+)次(.+委員|聯席)?會議紀錄)/);
+
+          if (matched) {
+            record.meet_title = matched[1];
+            record.record_title = `${matched[3]} (${record.date})`;
+            record.count = parseInt(matched[4]);
+          } else {
+            record.meet_title = record.title;
+            record.record_title = record.date;
+            record.count = 0;
+          }
+        }
+
+        const sorted = ret.sort((a, b) => {
+          if (a.meet_title != b.meet_title) {
+            return a.meet_title > b.meet_title ? -1 : 1;
+          }
+          if (a.count != b.count) {
+            return a.count > b.count ? -1 : 1;
+          }
+          return a.date > b.date ? -1 : 1;
+        });
+
+        var current_title = null;
+        var current_records = null;
+        for (var record of ret) {
+          if (!current_title || record.meet_title != current_title.text()) {
+            current_title = $('<h5></h5>').text(record.meet_title);
+            current_records = $('<div></div>');
+            var id = btoa(encodeURIComponent(record.date + record.title).replace('%', '')).replaceAll('=', '');
+            bindCollapsable(id, current_title, current_records);
+            meets_body.append(current_title).append(current_records);
+          }
+
+          const meet_card = $($('#tmpl-meet-card').html());
+          $('.meet-desc', meet_card).text(record.record_title);
+          $('.meet-desc', meet_card).attr('href', 'speech.html?id=' + encodeURIComponent(record.id));
+
+          current_records.append('<span></span>').append(meet_card);
+        }
      }, 'json');
    });
 

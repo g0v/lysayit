@@ -81,56 +81,55 @@
   }
   const meeting_id = matches[1];
   const target_lineno = matches[3];
-  let title = '';
-  let location = '';
-  let time = '';
   let chairman = '';
 
-  const [speech, meetings] = await Promise.all([
-    $.get('https://lysayit.g0v.ronny.tw/api/speech/' + meeting_id, undefined, undefined, 'json'),
-    $.get('https://lysayit.g0v.ronny.tw/api/meet', undefined, undefined, 'json'),
-  ]);
+  const meeting = await $.get(`https://lysayit.g0v.ronny.tw/api/speech/${meeting_id}?full=1`, undefined, undefined, 'json');
+  const speech = meeting.speech;
   if (speech.length === 0) {
     return;
   }
 
-  for(const meeting of meetings) {
-    if (meeting.id === meeting_id) {
-      title = meeting.title;
-      location = meeting.extra['地點'];
-      time = meeting.extra['時間'];
-      if ('undefined' !== typeof(meeting.extra['主席'])) {
-        chairman = normalizeSpeaker(meeting.extra['主席']);
-      } else {
-        chairman = '';
+  const term = speech[0].term;
+  const persons = await $.get(`https://lysayit.g0v.ronny.tw/api/term/${term}/speaker`, undefined, undefined, 'json');
+  const speaker_map = persons.reduce((m, p) => {
+    if (p.extra) {
+      m[p.name] = p;
+    }
+    return m;
+  }, {});
+
+  if ('undefined' !== typeof(meeting.info.extra['主席'])) {
+    chairman = normalizeSpeaker(meeting.info.extra['主席']);
+    if (chairman in speaker_map) {
+      speaker_map['主席'] = speaker_map[chairman];
+    }
+  }
+
+  // add dupplicated mapping for better performance
+  speech.forEach((s) => {
+    if (!speaker_map.hasOwnProperty(s.speaker)) {
+      const normalized_name = normalizeSpeaker(s.speaker);
+      if (normalized_name in speaker_map) {
+        speaker_map[s.speaker] = speaker_map[normalized_name];
       }
     }
-  }
+  });
 
-  const persons = await $.get('https://lysayit.g0v.ronny.tw/api/term/' + speech[0]['term'] + "/speaker", undefined, undefined, 'json');
-  const portrait_map = {};
-  for (const p of persons) {
-    if (!p.extra) {
-      continue;
-    }
-
-    portrait_map[p.name] = p.extra[2];
-  }
-
-  const term = speech[0].term;
   for (const idx in speech) {
-    const speaker = normalizeSpeaker(speech[idx].speaker, chairman);
+    const speaker = speaker_map[speech[idx].speaker];
 
-    speech[idx].speaker = speaker;
-    if (speaker in portrait_map) {
-      speech[idx].portrait = portrait_map[speaker];
-      speech[idx].speaker_url = 'speaker.html?term=' + term + '&name=' + speaker;
+    if (speaker) {
+      speech[idx].portrait = speaker.extra[2];
+      speech[idx].speaker_url = 'speaker.html?term=' + term + '&name=' + speaker.name;
     } else {
       speech[idx].portrait = 'https://sayit.pdis.nat.gov.tw/static/speeches/i/a.png';
       speech[idx].speaker_url = '';
     }
   }
 
+  const title = meeting.info.title;
+  const location = meeting.info.extra['地點'];
+  const time = meeting.info.extra['時間'];
   render(title, location, time, chairman, speech, target_lineno);
 })();
 
@@ -167,20 +166,39 @@ function normalizeSpeaker(speaker, chairman) {
     return chairman || '主席';
   }
 
-  speaker = speaker.replace('召集委員', '');
-  speaker = speaker.replace('委員', '');
-  speaker = speaker.replace('副', '');
-  speaker = speaker.replace('秘書長', '');
-  speaker = speaker.replace('主任', '');
-  speaker = speaker.replace('專門', '');
-  speaker = speaker.replace('部長', '');
-  speaker = speaker.replace('次長', '');
-  speaker = speaker.replace('局長', '');
-  speaker = speaker.replace('處長', '');
-  speaker = speaker.replace('司長', '');
-  speaker = speaker.replace('署長', '');
-  speaker = speaker.replace('廳長', '');
-  speaker = speaker.replace('院長', '');
+  const titles = [
+    '召集委員',
+    '委員',
+    '副',
+    '主任委員',
+    '秘書長', 
+    '主任',
+    '專門',
+    '部長',
+    '次長',
+    '局長',
+    '處長',
+    '司長',
+    '署長',
+    '廳長',
+    '院長',
+    '院長',
+    '校長',
+    '律師',
+    '名譽教授',
+    '教授',
+    '會計師',
+    '董事長',
+    '執行秘書',
+    '代理部長',
+    '總經理',
+    '審計長',
+    '主計長',
+  ];
+
+  for (const title of titles) {
+    speaker = speaker.replace(title, '');
+  }
 
   return speaker;
 }

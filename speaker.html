@@ -33,7 +33,15 @@
             </ul>
           </div>
         </div>
-        <h3>參與議程</h3>
+        <div style="display:flex;flex-direction:row;">
+          <h3>參與議程</h3>
+          <pagination
+            style="margin-left: 5px;"
+            :page="meetingPage"
+            :total="meetingTotalPage"
+            @page-change="fetchMeetings($event)"
+          ></pagination>
+        </div>
         <ul class="list-unstyled">
           <meeting-item
             v-for="meeting in meetings"
@@ -80,11 +88,13 @@
             votes: [],
             votePage: 1,
             voteTotalPage: 1,
+            meetingPage: 1,
+            meetingTotalPage: 1,
           }
         },
         mounted() {
           this.fetchPerson()
-          this.fetchMeetings()
+          this.fetchMeetings(this.meetingPage);
           this.fetchVotings(this.votePage);
         },
         methods: {
@@ -122,24 +132,36 @@
                 return votes;
             }, []);
           },
-          async fetchMeetings() {
+          async fetchMeetings(page) {
             const urlSearchParams = new URLSearchParams(window.location.search);
-            const period = urlSearchParams.get('period');
+            const term = urlSearchParams.get('period');
             const name = urlSearchParams.get('name');
-            const filename = `person-${period}-${name}.json`;
-            const resp = await fetch(`person/${filename}`)
+            const limit = 20;
+            const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/speaker/${name}/meet?limit=${limit}&page=${page}&term=${term}`);
+            const offline_file = await fetch(`person/person-${term}-${name}.json`);
             try {
+              const offline_data = await offline_file.json();
+              const speech_count_map = offline_data.reduce((m, r) => {
+                const id = r[0].replace('.doc', '');
+                const speech_count = r[5];
+                m[id] = speech_count;
+                return m;
+              }, {});
               const data = await resp.json();
-              this.meetings = data.map(m => {
+              this.meetings = data.meets.map(m => {
+                const speech_count = speech_count_map[m.id] || 'no data';
+
                 return {
-                  id: m[0],
-                  title: m[1],
-                  period: m[2],
-                  episode: m[3],
-                  date: m[4],
-                  speech_count: m[5]
+                  id: m.id,
+                  title: m.title,
+                  period: m.term,
+                  episode: m.sessionPeriod,
+                  date: m.date,
+                  speech_count: speech_count,
                 }
               });
+              this.meetingPage = parseInt(data.page);
+              this.meetingTotalPage = data.totalpage;
             } catch(e) {
               console.warn('no meeting data');
             }

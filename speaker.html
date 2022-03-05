@@ -21,13 +21,13 @@
       <div id="speaker-app" class="mt-3">
         <h3>個人資料</h3>
         <div class="d-flex info mb-5">
-          <div v-if="person.type === '委員'" class="photo">
+          <div v-if="person.type === 0" class="photo">
             <img :src="person.extra[2]" alt="">
           </div>
           <div class="intro">
             <ul>
               <li>姓名：{{person.name}}</li>
-              <li v-if="person.type === '委員'">政黨：{{person.extra[3]}}</li>
+              <li v-if="person.type === 0">政黨：{{person.extra[3]}}</li>
               <li>與會次數：{{person.meet_count}}</li>
               <li>發言次數：{{person.speech_count}}</li>
             </ul>
@@ -76,11 +76,15 @@
       const app = Vue.createApp({
         data() {
           const urlSearchParams = new URLSearchParams(window.location.search);
+          const term = urlSearchParams.get('term');
+          const name = urlSearchParams.get('name');
 
           return {
             initialized: false,
+            term,
+            speaker_name: name,
             person: {
-              name: urlSearchParams.get('name'),
+              name,
               meet_count: 0,
               speech_count: 0,
             },
@@ -99,33 +103,23 @@
         },
         methods: {
           async fetchPerson() {
-            const urlSearchParams = new URLSearchParams(window.location.search);
-            const term = parseInt(urlSearchParams.get('term'));
-            const name = urlSearchParams.get('name');
-            const resp = await fetch(`personlist/personlist-${term}.json`);
-
-            try {
-              const list = await resp.json();
-              this.person = list.find(x => x.name === name) || this.person;
-            } catch(e) {
-              console.warn('no person data');
-            }
+            const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/term/${this.term}/speaker`);
+            const list = await resp.json();
+            this.person = list.find(x => x.name === this.speaker_name) || this.person;
           },
           async fetchVotings(page) {
-            const urlSearchParams = new URLSearchParams(window.location.search);
-            const name = urlSearchParams.get('name');
             const limit = 20;
-            const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/vote/${name}?limit=${limit}&page=${page}`)
+            const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/vote/${this.speaker_name}?limit=${limit}&page=${page}`)
             const data = await resp.json();
             this.voteTotalPage = data.totalpage;
             this.votePage = parseInt(data.page, 10);
             this.votes = data.records.reduce((votes, record) => {
                 const copied = Object.assign({}, record);
-                if (record['贊成'].indexOf(name) >= 0) {
+                if (record['贊成'].indexOf(this.speaker_name) >= 0) {
                   copied.vote = '贊成';
-                } else if (record['反對'].indexOf(name) >= 0) {
+                } else if (record['反對'].indexOf(this.speaker_name) >= 0) {
                   copied.vote = '反對';
-                } else if (record['棄權'].indexOf(name) >= 0) {
+                } else if (record['棄權'].indexOf(this.speaker_name) >= 0) {
                   copied.vote = '棄權';
                 }
                 votes.push(copied);
@@ -133,12 +127,9 @@
             }, []);
           },
           async fetchMeetings(page) {
-            const urlSearchParams = new URLSearchParams(window.location.search);
-            const term = urlSearchParams.get('term');
-            const name = urlSearchParams.get('name');
             const limit = 20;
-            const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/speaker/${name}/meet?limit=${limit}&page=${page}&term=${term}`);
-            const offline_file = await fetch(`person/person-${term}-${name}.json`);
+            const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/speaker/${this.speaker_name}/meet?limit=${limit}&page=${page}&term=${this.term}`);
+            const offline_file = await fetch(`person/person-${this.term}-${this.speaker_name}.json`);
             try {
               const offline_data = await offline_file.json();
               const speech_count_map = offline_data.reduce((m, r) => {

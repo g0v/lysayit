@@ -120,7 +120,7 @@
 
     if (speaker) {
       speech[idx].portrait = speaker.extra[2];
-      speech[idx].speaker_url = 'speaker.html?term=' + term + '&name=' + speaker.name;
+      speech[idx].speaker_url = `speaker.html?term=${parseInt(term)}&name=${speaker.name}`;
     } else {
       speech[idx].portrait = 'https://sayit.pdis.nat.gov.tw/static/speeches/i/a.png';
       speech[idx].speaker_url = '';

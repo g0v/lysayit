@@ -1,10 +1,4 @@
 @charset "UTF-8";
-.collapse {
-  display: none;
-}
-.collapse.in {
-  display: block;
-}
 
 .timeline {
   position: relative;

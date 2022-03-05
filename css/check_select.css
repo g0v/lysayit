@@ -1,0 +1,46 @@
+
+.multiselect {
+  position: relative;
+  display: inline-block;
+}
+
+.multiselect .select-box select {
+  background-color: white;
+  width: 100%;
+}
+ 
+.menu-prevent {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.check-select {
+  position: absolute;
+  border: 1px #dadada solid;
+  background: white;
+  z-index: 5;
+  right: 0;
+  min-width: 350px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.check-select .option {
+  padding: 2px 8px;
+  white-space: nowrap;
+  display: inline-block;
+  height: 20px;
+}
+
+.check-select .option label {
+  white-space: nowrap;
+  line-height: 16px;
+  vertical-align: top;
+}
+
+.check-select .option input {
+  margin: 0 4px 0 0;
+}

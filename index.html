@@ -4,11 +4,13 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>立法院會議記錄</title>
+  <script src="https://unpkg.com/vue@next"></script>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
   <link href="css/style.css" rel="stylesheet" type="text/css">
   <link href="css/timeline.css" rel="stylesheet" type="text/css">
+  <link href="css/check_select.css" rel="stylesheet" type="text/css">
 </head>
 
 <body>
@@ -21,135 +23,243 @@
         <li><a href="index.html" class="text-danger">Speeches</a></li>
       </ul>
     </nav>
-    <div class="timeline">
-      <div class="line"></div>
-      <div id="timeline-groups" class="panel-group" role="tablist" aria-multiselectable="true">
-        <div class="d-flex justify-content-center">
-          <div class="spinner-grow text-danger" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
+    <div id="app">
+      <div style="position:absolute;right:50px;z-index:5;">
+        <check-select :options="options" default-text="無篩選條件" style="min-width:150px;max-width:400px;" @select-change="filter=$event"></check-select>
+      </div>
+      <div class="timeline">
+        <div class="line"></div>
+        <div class="panel-group" role="tablist" aria-multiselectable="true">
+          <loading v-if="!ready"></loading>
+          <term :period="period" :keywords="keywords" v-for="period in periods" v-show="isSelectedPeriod(period)" :key="period"></term>
         </div>
       </div>
     </div>
   </div>
-  <script id="tmpl-session-card" type="text/html">
-<div class="panel panel-default">
- <div class="panel-heading" role="tab">
-  <div class="icon"></div>
-  <div class="panel-title">
-   <div class="group unload">
-    <span class="group-name"></span>
-(會議數:<span class="meet-count"></span>) <span class="date-start"></span> ~ <span class="date-end"></span>
-   </div>
-  </div>
- </div>
- <div class="panel-collapse">
-   <div class="panel-body">
- </div>
-</div>
-  </script>
-  <script id="tmpl-meet-card" type="text/html">
-<div class="meet-card">
-  <a class="meet-desc"></a>
-</div>
-  </script>
-  <script>
-    function getGroupName(session, duration) {
-      if (session && duration) {
-        return '第' + session + '屆第' + duration + '會期';
-      }
+  <script type="module">
+    import CheckSelect from './js/check_select.js';
 
-      if (session && !duration) {
-        return '第' + session + '屆';
-      }
-
-      return '其他';
-    }
-
-    function bindCollapsable(id, trigger, folder) {
-      trigger.attr('class', (trigger.attr('class') || '') + ' collapsed trigger');
-      trigger.attr('data-toggle', 'collapse').attr('href', '#' + id);
-      folder.attr('id', id).attr('class', (folder.attr('class') || '') + ' collapse');
-    }
-
-   $.get('https://lysayit.g0v.ronny.tw/api/stat', function(ret){
-     ret.terms = ret.terms.sort(function(a,b) { return b.term - a.term; });
-     $('#timeline-groups').html('');
-     for (var term_info of ret.terms) {
-       var period_records = term_info.periods;
-       term_info.periods = term_info.periods.sort(function(a,b){ return b.period - a.period; });
-
-       for (var period_info of period_records) {
-         let group_name = getGroupName(term_info.term, period_info.period);
-         var session_card = $($('#tmpl-session-card').html());
-         $('.group', session_card).data('term', term_info.term);
-         $('.group', session_card).data('period', period_info.period);
-         $('.group-name', session_card).text(group_name);
-         $('.meet-count', session_card).text(period_info.meet_count);
-         $('.date-start', session_card).text(period_info.date_min);
-         $('.date-end', session_card).text(period_info.date_max);
-
-         var id = 'session-' + term_info.term + '-' + period_info.period;
-         bindCollapsable(id, $('.group', session_card), $('.panel-collapse', session_card));
-
-         $('#timeline-groups').append(session_card);
-       }
-     }
-   }, 'json');
-
-   $('#timeline-groups').on('click', '.group.unload', function(e){
-     var parent_dom = $(this).parents('.panel');
-     $('.panel-body', parent_dom).html('<div class="spinner-grow text-danger" role="status"><span class="visually-hidden">Loading...</span></div>');
-     $(this).removeClass('unload');
-     $.get('https://lysayit.g0v.ronny.tw/api/meet?limit=1000&term=' + $(this).data('term') + '&sessionPeriod=' + $(this).data('period'), function(ret){
-        const meets_body = $('.panel-body', parent_dom);
-        meets_body.html('');
-
-        // grouping by title
-        for (var record of ret) {
-          const matched = record.title.match(/(.+會期(.*?))(第(\d+)次(.+委員|聯席)?會議紀錄)/);
-
-          if (matched) {
-            record.meet_title = matched[1];
-            record.record_title = `${matched[3]} (${record.date})`;
-            record.count = parseInt(matched[4]);
-          } else {
-            record.meet_title = record.title;
-            record.record_title = record.date;
-            record.count = 0;
-          }
+    const app = Vue.createApp({
+      data() {
+        return {
+          ready: false,
+          periods: [],
+          filter : {},
         }
-
-        const sorted = ret.sort((a, b) => {
-          if (a.meet_title != b.meet_title) {
-            return a.meet_title > b.meet_title ? -1 : 1;
+      },
+      mounted() {
+        this.fetchMeetings();
+      },
+      computed: {
+        options() {
+          return {
+            period: {
+              group: '會期',
+              options: this.periods.map((period) => {
+                return {
+                    name: `${this.getGroupName(period)} ${period.date_min} ~ ${period.date_max}`,
+                    value: this.getGroupName(period),
+                  }
+                }
+              ),
+            },
+            attender: {
+              group: '與會者',
+              options: [
+                {name: '財政委員會', value: '財政'},
+                {name: '經濟委員會', value: '經濟'},
+                {name: '內政委員會', value: '內政'},
+                {name: '教育委員會', value: '教育'},
+                {name: '文化委員會', value: '文化'},
+                {name: '程序委員會', value: '程序'},
+                {name: '交通委員會', value: '交通'},
+                {name: '紀律委員會', value: '紀律'},
+                {name: '衛生環境委員會', value: '衛生環境'},
+                {name: '社會福利委員會', value: '社會福利'},
+                {name: '司法及法制委員會', value: '司法'},
+                {name: '外交及國防委員會', value: '國防'},
+                {name: '其他', value: ''},
+              ],
+            }
+          };
+        },
+        keywords() {
+          return this.filter.attender || [];
+        },
+      },
+      methods: {
+        getGroupName(period) {
+          if (period.term && period.period) {
+            return '第' + period.term + '屆第' + period.period + '會期';
           }
-          if (a.count != b.count) {
-            return a.count > b.count ? -1 : 1;
+    
+          if (period.term && !period.period) {
+            return '第' + period.term + '屆';
           }
-          return a.date > b.date ? -1 : 1;
-        });
-
-        var current_title = null;
-        var current_records = null;
-        for (var record of ret) {
-          if (!current_title || record.meet_title != current_title.text()) {
-            current_title = $('<h5></h5>').text(record.meet_title);
-            current_records = $('<div></div>');
-            var id = btoa(encodeURIComponent(record.date + record.title).replace('%', '')).replaceAll('=', '');
-            bindCollapsable(id, current_title, current_records);
-            meets_body.append(current_title).append(current_records);
+    
+          return '其他';
+        },
+        isSelectedPeriod(p) {
+          const periodFilter = this.filter.period || [];
+          if (periodFilter.length === 0) {
+            return true;
           }
+          return periodFilter.indexOf(p.name) >= 0;
+        },
+        async fetchMeetings() {          
+          const resp = await fetch('https://lysayit.g0v.ronny.tw/api/stat');
+          const ret = await resp.json();
 
-          const meet_card = $($('#tmpl-meet-card').html());
-          $('.meet-desc', meet_card).text(record.record_title);
-          $('.meet-desc', meet_card).attr('href', 'speech.html?id=' + encodeURIComponent(record.id));
+          this.periods = ret.terms.sort((a,b) => b.term - a.term).reduce((periods, term) => {
+            const sorted_periods = term.periods.sort((a,b) => b.period - a.period).map((p) => {
+              p.term = term.term;
+              p.name = this.getGroupName(p);
+              return p;
+            });
+            return periods.concat(sorted_periods);
+          }, []);
+          this.ready = true;
+        },
+      },
+    })
+    app.component('check-select', CheckSelect);
 
-          current_records.append('<span></span>').append(meet_card);
+    app.component('loading', {
+      template: `
+      <div class="d-flex justify-content-center">
+        <div class="spinner-grow text-danger" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>`,
+    });
+
+    app.component('term', {
+      data() {
+        return {
+          ready: false,
+          meetings: [],
         }
-     }, 'json');
-   });
+      },
+      props: ['period', 'keywords'],
+      computed: {
+        collapseID() {
+          return 'session-' + this.period.term + '-' + this.period.period;
+        },
+        meetCount() {
+          if (!this.ready) {
+            return this.period.meet_count;
+          }
+          return this.meetings.reduce((s, m) => {
+            if (this.containsAnyKeyword(m.title)) {
+              s += m.records.length;
+            }
+            return s;
+          }, 0);
+        },
+      },
+      methods: {
+        containsAnyKeyword(text) {
+          if (this.keywords.length === 0) {
+            return true;
+          }
 
+          const hasOtherKeyword = this.keywords.indexOf('') >= 0;
+          const matched = text.match('會期(.+)委員會');
+
+          if (!matched) {
+            return hasOtherKeyword;
+          }
+
+          if (hasOtherKeyword) {
+            const allKeywords = ['財政', '經濟', '內政', '教育', '文化', '衛生環境', '社會福利', '司法', '國防', '程序', '交通', '紀律'];
+            if (!allKeywords.some((k) => {return matched[1].indexOf(k) >= 0;})) {
+              return true;
+            }
+          }
+
+          return this.keywords.some((k) => {
+            if (k === '') {return false;}
+            return matched[1].indexOf(k) >= 0;
+          });
+        },
+        async fetchMeetings() {
+          if (this.ready) {
+            return;
+          }
+
+          const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/meet?limit=1000&term=${this.period.term}&sessionPeriod=${this.period.period}`);
+          const ret = await resp.json();
+
+          // grouping by title
+          let current_title = null;
+          let current_records = null;
+
+          ret.forEach((record) => {
+            const matched = record.title.match(/(.+會期(.*?))(第(\d+)次(.+委員|聯席)?會議紀錄)/);
+  
+            if (matched) {
+              record.meeting_title = matched[1];
+              record.record_title = `${matched[3]} (${record.date})`;
+              record.serial_number = parseInt(matched[4]);
+            } else {
+              record.meeting_title = record.title;
+              record.record_title = record.date;
+              record.serial_number = 0;
+            }
+          });
+          
+          this.meetings = ret.sort((a, b) => {
+            if (a.meeting_title != b.meeting_title) {
+              return a.meeting_title > b.meeting_title ? -1 : 1;
+            }
+            if (a.serial_number != b.serial_number) {
+              return a.serial_number > b.serial_number ? -1 : 1;
+            }
+            return a.date > b.date ? -1 : 1;
+          }).reduce((m, record) => {
+            if (!current_title || record.meeting_title != current_title) {
+              current_title = record.meeting_title;
+              var meeting_id = btoa(encodeURIComponent(record.date + record.title).replace('%', '')).replaceAll('=', '');
+              m.push({
+                collapse_id: meeting_id,
+                title: record.meeting_title,
+                records: [record],
+              });
+            }
+
+            m[m.length - 1].records.push(record);
+            return m;
+          }, []);
+          this.ready = true;
+        },
+      },
+      template: `
+        <div class="panel panel-default">
+          <div class="panel-heading" role="tab">
+            <div class="icon"></div>
+            <div
+              data-toggle="collapse"
+              :href="'#' + collapseID"
+              @click="fetchMeetings()"
+              class="period-title collapsed trigger"
+            >{{ period.name }} (會議數 {{ meetCount }}) {{ period.date_min }} ~ {{ period.date_max }}</div>
+          </div>
+          <div :id="collapseID" class="panel-collapse collapse">
+            <loading v-if="!ready"></loading>
+            <div class="panel-body" v-for="meeting in meetings" v-show="containsAnyKeyword(meeting.title)">
+              <h5 class="'collapsed trigger" data-toggle="collapse" :href="'#' + meeting.collapse_id">{{ meeting.title }}</h5>
+              <div :id="meeting.collapse_id" class="collapse">
+                <div class="meet-card" v-for="record in meeting.records">
+                  <a class="meet-desc" :href="'speech.html?id=' + encodeURIComponent(record.id)">{{ record.record_title }}</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    `
+    })
+
+    app.mount('#app')
   </script>
 </body>
 

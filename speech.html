@@ -131,7 +131,44 @@
   const location = meeting.info.extra['地點'];
   const time = meeting.info.extra['時間'];
   render(title, location, time, chairman, speech, target_lineno);
+
+  let lazyImages = $('img:not([src])').toArray();
+  let scrollEvent = 'scroll';
+
+  if (window.hasOwnProperty("touchmove")) {
+    scrollEvent = 'touchmove';
+  }
+
+  $.fn.scrollEnd = function(callback, timeout) {
+    $(this).on(scrollEvent, function(){
+      const $this = $(this);
+      if ($this.data('scrollTimeout')) {
+        clearTimeout($this.data('scrollTimeout'));
+      }
+      $this.data('scrollTimeout', setTimeout(callback, timeout));
+    });
+  };
+
+  $(window).scrollEnd(function(){
+    const width = window.innerWidth || document.documentElement.clientWidth;
+    const height =  (window.innerHeight || document.documentElement.clientHeight);
+    lazyImages = lazyImages.reduce((unloaded, img) => {
+        if (elementInViewport(img, width, height)) {
+          img.setAttribute("src", img.getAttribute("data-src"));
+        } else {
+          unloaded.push(img);
+        }
+        return unloaded;
+    }, []);
+  }, 500);
 })();
+
+function elementInViewport(el, width, height) {
+  const rect = el.getBoundingClientRect();
+  const xIntersection = (rect.left >= 0 && rect.left <= width) || (rect.right >= 0 && rect.right <= width);
+  const yIntersection = (rect.top >= 0 && rect.top <= height) || (rect.bottom >= 0 && rect.bottom <= height);
+  return xIntersection && yIntersection;
+}
 
 function fetchMeetingInformation(lines) {
   let location = '';
@@ -171,7 +208,7 @@ function normalizeSpeaker(speaker, chairman) {
     '委員',
     '副',
     '主任委員',
-    '秘書長', 
+    '秘書長',
     '主任',
     '專門',
     '部長',
@@ -194,6 +231,11 @@ function normalizeSpeaker(speaker, chairman) {
     '總經理',
     '審計長',
     '主計長',
+    '系主任',
+    '理事長',
+    '總幹事',
+    '執行長',
+    '參事',
   ];
 
   for (const title of titles) {
@@ -201,6 +243,12 @@ function normalizeSpeaker(speaker, chairman) {
   }
 
   return speaker;
+}
+
+const picRegex = /\[pic:(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))\]/g;
+
+function replacePics(text) {
+  return text.replace(picRegex, '<img data-src="$1" style="min-width:500px;min-height:100px;">');
 }
 
 function render(title, location, time, chairman, speech, target_lineno) {
@@ -246,7 +294,12 @@ function render(title, location, time, chairman, speech, target_lineno) {
     $('.speech__links a', dom).attr('href', '#line-' + block.lineno);
 
     for (const line of block.content) {
-      $('.speech__content', dom).append($('<p></p>').text(line));
+      const replaced = replacePics(line);
+      if (replaced === line) {
+        $('.speech__content', dom).append($('<p></p>').text(line));
+      } else {
+        $('.speech__content', dom).append($('<p></p>').html(replaced));
+      }
     }
 
     session_list.append(dom);

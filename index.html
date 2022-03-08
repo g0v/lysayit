@@ -32,7 +32,7 @@
     const searchButton = document.getElementById('search-button');
     const searchInput = document.getElementById('search-input');
     searchButton.addEventListener('click', () => {
-      window.location = `/search.html?q=${searchInput.value}`;
+      window.location = `search.html?q=${searchInput.value}`;
     });
     searchInput.addEventListener('keypress',function(e) {
       if(e.which == 13) {

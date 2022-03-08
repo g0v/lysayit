@@ -1,0 +1,18 @@
+html, body {
+    height: 100%;
+}
+
+#search-button {
+    background-image: url("/images/search-icons.png");
+    width: 20px;
+    height: 20px;
+    background-position: 0 40px;
+    position: absolute;
+    right: 0.6em;
+    top: 20%;
+    cursor: pointer;
+}
+
+#search-input {
+    width: 400px;
+}

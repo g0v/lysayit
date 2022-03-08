@@ -12,11 +12,11 @@
 
   <div class="container">
     <nav id="header">
-      <h1><a href="/" class="text-danger">SayIt</a></h1>
+      <h1><a href="index.html" class="text-danger">SayIt</a></h1>
       <ul>
         <li><a href="index.html" class="text-danger">首頁</a></li>
         <li><a href="speakers.html" class="text-danger">Speakers</a></li>
-        <li><a href="index.html" class="text-danger">Speeches</a></li>
+        <li><a href="speeches.html" class="text-danger">Speeches</a></li>
       </ul>
     </nav>
 
@@ -120,9 +120,9 @@
 
     if (speaker) {
       speech[idx].portrait = speaker.extra[2];
-      speech[idx].speaker_url = 'speaker.html?term=' + term + '&name=' + speaker.name;
+      speech[idx].speaker_url = `speaker.html?term=${parseInt(term)}&name=${speaker.name}`;
     } else {
-      speech[idx].portrait = 'https://sayit.pdis.nat.gov.tw/static/speeches/i/a.png';
+      speech[idx].portrait = '/images/a.png';
       speech[idx].speaker_url = '';
     }
   }

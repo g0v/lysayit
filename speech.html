@@ -122,7 +122,7 @@
       speech[idx].portrait = speaker.extra[2];
       speech[idx].speaker_url = `speaker.html?term=${parseInt(term)}&name=${speaker.name}`;
     } else {
-      speech[idx].portrait = '/images/a.png';
+      speech[idx].portrait = 'images/a.png';
       speech[idx].speaker_url = '';
     }
   }
@@ -132,15 +132,15 @@
   const time = meeting.info.extra['時間'];
   render(title, location, time, chairman, speech, target_lineno);
 
-  let lazyImages = $('img:not([src])').toArray();
-  let scrollEvent = 'scroll';
+  let scroll_event = 'scroll';
+  let lazy_images = $('img:not([src])').toArray();
 
   if (window.hasOwnProperty("touchmove")) {
-    scrollEvent = 'touchmove';
+    scroll_event = 'touchmove';
   }
 
   $.fn.scrollEnd = function(callback, timeout) {
-    $(this).on(scrollEvent, function(){
+    $(this).on(scroll_event, function(){
       const $this = $(this);
       if ($this.data('scrollTimeout')) {
         clearTimeout($this.data('scrollTimeout'));
@@ -149,10 +149,10 @@
     });
   };
 
-  $(window).scrollEnd(function(){
+  function loadImagesLazily(){
     const width = window.innerWidth || document.documentElement.clientWidth;
     const height =  (window.innerHeight || document.documentElement.clientHeight);
-    lazyImages = lazyImages.reduce((unloaded, img) => {
+    lazy_images = lazy_images.reduce((unloaded, img) => {
         if (elementInViewport(img, width, height)) {
           img.setAttribute("src", img.getAttribute("data-src"));
         } else {
@@ -160,7 +160,11 @@
         }
         return unloaded;
     }, []);
-  }, 500);
+  }
+  
+
+  $(window).scrollEnd(loadImagesLazily, 500);
+  loadImagesLazily();
 })();
 
 function elementInViewport(el, width, height) {

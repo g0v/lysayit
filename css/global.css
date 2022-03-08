@@ -15,4 +15,5 @@ html, body {
 
 #search-input {
     width: 400px;
+    padding-right: 35px;
 }

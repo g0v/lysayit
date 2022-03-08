@@ -3,7 +3,7 @@ html, body {
 }
 
 #search-button {
-    background-image: url("/images/search-icons.png");
+    background-image: url("../images/search-icons.png");
     width: 20px;
     height: 20px;
     background-position: 0 40px;

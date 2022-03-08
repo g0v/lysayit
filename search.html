@@ -41,7 +41,7 @@
           <div v-for="speech in result.speeches" style="margin-bottom:20px;">
             <div class="title">
               <a
-                :href = "`/speech.html?id=${speech.meet_id}#line-${speech.lineno}`"
+                :href = "`speech.html?id=${speech.meet_id}#line-${speech.lineno}`"
               >{{ meetings[speech.meet_id].date }} {{ meetings[speech.meet_id].title }}</a>
             </div>
             <div class="name">{{ speech.speaker }}</div>

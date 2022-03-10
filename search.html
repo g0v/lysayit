@@ -46,9 +46,7 @@
               >{{ meetings[speech.meet_id].date }} {{ meetings[speech.meet_id].title }}</a>
             </div>
             <div class="name">{{ speech.speaker }}</div>
-            <div class="content" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-              {{ speech.content.join('') }}
-            </div>
+            <div class="content" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;" v-html="getAroundKeyword(speech.content, speech.matched_idx, speech.matched_len)">
           </div>
         </div>
       </div>
@@ -74,11 +72,31 @@
           keyword: '',
           page: 1,
           result: {},
+          visible_length: 185,
+          width: null,
+          height: null,
+          observer: null
         }
       },
       mounted() {
         const urlSearchParams = new URLSearchParams(window.location.search);
         this.keyword = urlSearchParams.get('q');
+        const box = document.querySelector('#app');
+
+        // create the observer
+        this.observer = new ResizeObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (this.resizeEnd) {
+              clearTimeout(this.resizeEnd);
+            }
+            this.resizeEnd = setTimeout(this.onResize, 500, mutation.contentRect.width);
+          });
+        });
+
+        // observe element's specified mutations
+        this.observer.observe(box, {
+          attributes: true
+        });
 
         const searchButton = document.getElementById('search-button');
         const searchInput = document.getElementById('search-input');
@@ -93,6 +111,10 @@
         searchInput.focus();
 
         this.searchPage(1);
+      },
+      //disconnect the observer before destroy
+      beforeDestroy() {
+        if (this.observer) this.observer.disconnect();
       },
       computed: {
         meetings() {
@@ -118,11 +140,56 @@
           this.loading = true;
 
           const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/searchspeech?q=${this.keyword}&page=${page}`);
-          this.result = await resp.json();
+          const result = await resp.json();
+
+          result.speeches.forEach((s) => {
+            s.content = s.content.map((s)=>{return s.trim();}).join('');
+            const [len, _, idx] = this.getLongestCommonIndex(this.keyword, s.content);
+            s.matched_idx = idx;
+            s.matched_len = len;
+          });
+
+          this.result = result;
           this.page = page;
           this.loading = false;
           this.ready = true;
         },
+        onResize(width) {
+          this.visible_length = Math.floor(185 * width / 1296);
+        },
+        getLongestCommonIndex(X,  Y) {
+          const m = X.length;
+          const n  = Y.length;
+          const LCStuff = Array(m + 1).fill().map(()=>Array(n + 1).fill(0));
+          let result = 0;
+          let lastI = 0;
+          let lastJ = 0;
+          let i, j;
+
+          for (i = 0; i <= m; i++) {
+              for (j = 0; j <= n; j++) {
+                  if (i == 0 || j == 0)
+                      LCStuff[i][j] = 0;
+                  else if (X[i - 1] == Y[j - 1]) {
+                      LCStuff[i][j] = LCStuff[i - 1][j - 1] + 1;
+                      if (result  < LCStuff[i][j]) {
+                        result = LCStuff[i][j];
+                        lastI = i;
+                        lastJ = j;
+                      }
+                  } else
+                      LCStuff[i][j] = 0;
+              }
+          }
+          return [result, lastI - result, lastJ - result];
+        },
+        getAroundKeyword(content, idx, len) {
+          const begin_idx = Math.max(0, idx - Math.floor((this.visible_length - len) / 2));
+          let result = (begin_idx > 0 ? '...' : '') + content.substr(begin_idx, idx - begin_idx);
+          result += `<span style="color:#dc3545;">${content.substr(idx, len)}</span>`;
+          result += content.substr(idx + len, this.visible_length - len - (idx - begin_idx));
+          return result;
+        }
       },
     });
 

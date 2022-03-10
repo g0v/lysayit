@@ -28,16 +28,17 @@
             <div id="search-button" class="search-button" @click="search(null)"></div>
           </div>
           <pagination
+            v-show="ready"
             :page="page"
             :total="result.total_page"
             @page-change="searchPage($event)"
           ></pagination>
         </div>
-        <div id="search-stat">搜尋結果：共 {{ result.total || 0 }} 筆</div>
+        <div id="search-stat" v-show="ready">搜尋結果：共 {{ result.total || 0 }} 筆</div>
       </div>
       <div id="search-result" style="margin-bottom: 20px;">
-        <span v-show="!ready">搜尋中...</span>
-          <div v-show="ready">
+        <span v-show="loading">搜尋中...</span>
+        <div v-show="ready">
           <div v-for="speech in result.speeches" style="margin-bottom:20px;">
             <div class="title">
               <a
@@ -51,6 +52,14 @@
           </div>
         </div>
       </div>
+      <div class="d-flex flex-row justify-content-center">
+        <pagination
+          v-show="ready"
+          :page="page"
+          :total="result.total_page"
+          @page-change="searchPage($event)"
+        ></pagination>
+      </div>
     </div>
   </div>
   <script type="module">
@@ -60,6 +69,7 @@
       data() {
         return {
           ready: false,
+          loading: true,
           keyword_changed: false,
           keyword: '',
           page: 1,
@@ -105,11 +115,12 @@
           this.searchPage(page);
         },
         async searchPage(page) {
-          this.ready = false;
-          this.page = page;
+          this.loading = true;
 
-          const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/searchspeech?q=${this.keyword}&page=${this.page}`);
+          const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/searchspeech?q=${this.keyword}&page=${page}`);
           this.result = await resp.json();
+          this.page = page;
+          this.loading = false;
           this.ready = true;
         },
       },

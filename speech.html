@@ -90,7 +90,7 @@
   }
 
   const term = speech[0].term;
-  const persons = await $.get(`https://lysayit.g0v.ronny.tw/api/term/${term}/speaker`, undefined, undefined, 'json');
+  const persons = await $.get(`https://lysayit.g0v.ronny.tw/api/term/${term}/speaker/0?limit=200`, undefined, undefined, 'json');
   const speaker_map = persons.reduce((m, p) => {
     if (p.extra) {
       m[p.name] = p;

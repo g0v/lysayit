@@ -97,16 +97,10 @@
           }
         },
         mounted() {
-          this.fetchPerson()
           this.fetchMeetings(this.meetingPage);
           this.fetchVotings(this.votePage);
         },
         methods: {
-          async fetchPerson() {
-            const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/term/${this.term}/speaker`);
-            const list = await resp.json();
-            this.person = list.find(x => x.name === this.speaker_name) || this.person;
-          },
           async fetchVotings(page) {
             const limit = 20;
             const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/vote/${this.speaker_name}?limit=${limit}&page=${page}`)
@@ -141,6 +135,9 @@
                   speech_count: m.speech_count,
                 }
               });
+              if (data.person_data) {
+                 this.person = data.person_data;
+              }
               this.meetingPage = parseInt(data.page);
               this.meetingTotalPage = data.totalpage;
             } catch(e) {

@@ -145,9 +145,9 @@
           this.initialized = true
         },
         async fetchPeople() {
-          const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/term/${this.periodSelect}/speaker`)
+          const resp = await fetch(`https://lysayit.g0v.ronny.tw/api/term/${this.periodSelect}/speaker/0?limit=200`)
           let list = await resp.json()
-          this.people = list.map(x => {
+          this.people = list.persons.map(x => {
             let info = {
               period: this.periodSelect,
               type: x.type,
